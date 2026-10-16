@@ -1,0 +1,511 @@
+<!doctype html><html lang="en-AU"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSA Student Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column of report panels; summary first, then progress, item detail, suggested extras. */
+:root {
+  --bg: #F2F5F5;
+  --surface: #FFFFFF;
+  --ink: #16232A;
+  --ink-2: #4A5A61;
+  --muted: #74858B;
+  --line: #DCE3E5;
+  --track: #E9EEEF;
+  --accent: #0E6A70;
+  --accent-soft: #93C2C4;
+  --on-accent: #FFFFFF;
+  --stop: #A95A14;
+  --stop-soft: #F6E6D4;
+  --suggest: #5B4FA8;
+  --suggest-soft: #ECE9F8;
+  --font-display: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1619; --surface: #152025; --ink: #E3ECEE; --ink-2: #A9B8BD; --muted: #7F9095;
+    --line: #26353B; --track: #1F2C31; --accent: #5DB7BC; --accent-soft: #2E6064; --on-accent: #0E1619;
+    --stop: #E5A060; --stop-soft: #3A2A1B; --suggest: #A99FEA; --suggest-soft: #262241;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1619; --surface: #152025; --ink: #E3ECEE; --ink-2: #A9B8BD; --muted: #7F9095;
+  --line: #26353B; --track: #1F2C31; --accent: #5DB7BC; --accent-soft: #2E6064; --on-accent: #0E1619;
+  --stop: #E5A060; --stop-soft: #3A2A1B; --suggest: #A99FEA; --suggest-soft: #262241;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 18px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Header */
+.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+.head .who { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-2); font-size: 14px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); white-space: nowrap; }
+.chip.suggest { color: var(--suggest); background: var(--suggest-soft); border-color: transparent; }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel.is-suggest { border-style: dashed; border-color: color-mix(in oklab, var(--suggest) 45%, var(--line)); }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.panel-head .titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sub { color: var(--ink-2); font-size: 14px; }
+
+/* Level hero */
+.hero { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 0; padding: 0; overflow: hidden; }
+.hero .level { background: var(--accent); color: var(--on-accent); padding: 22px 24px; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.hero .level .eyebrow { color: inherit; opacity: 0.85; }
+.hero .level .big { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.2; }
+.hero .level .big b { font-size: 64px; display: block; line-height: 1; letter-spacing: -0.02em; }
+.hero .level .delta { font-size: 14px; opacity: 0.9; }
+.hero .side { padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.targets { display: flex; flex-wrap: wrap; gap: 8px; }
+.target { border: 1px solid var(--stop); background: var(--stop-soft); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; min-width: 96px; }
+.target strong { font-family: var(--font-display); font-weight: 600; }
+.target span { font-size: 13px; color: var(--ink-2); }
+.target span + span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stop); }
+.target.gap { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, var(--surface)); }
+.target.gap span + span { color: var(--accent); }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--ink-2); }
+.facts b { color: var(--ink); }
+
+/* Controls */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.check input { accent-color: var(--accent); }
+
+/* Line chart */
+#lineChart { width: 100%; min-height: 220px; }
+#lineChart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.axis-text { fill: var(--muted); font-size: 12px; font-family: var(--font-body); }
+.grid-line { stroke: var(--line); stroke-width: 1; }
+.pt-hit { fill: transparent; cursor: pointer; }
+details.table-view summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
+
+/* Bar chart */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.lg-full { background: var(--accent); }
+.lg-part { background: var(--accent-soft); }
+.lg-stop { background: var(--stop); }
+.lg-none { border: 1px dashed var(--muted); }
+.lg-prev { width: 2px !important; height: 14px !important; background: var(--ink); border-radius: 0 !important; vertical-align: -3px !important; }
+.bars { display: flex; flex-direction: column; gap: 3px; }
+.bar-row { display: grid; grid-template-columns: 64px 1fr 52px; align-items: center; gap: 10px; font-size: 13px; padding: 1px 0; border-radius: 4px; }
+.bar-row:hover { background: var(--track); }
+.bar-label { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 14px; background: var(--track); border-radius: 0 4px 4px 0; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-soft); border-radius: 0 4px 4px 0; }
+.bar-row.full .fill { background: var(--accent); }
+.bar-row.stop .fill { background: var(--stop); }
+.bar-row.none .track { background: transparent; border: 1px dashed var(--line); }
+.bar-row.none .bar-label, .bar-row.none .bar-val { color: var(--muted); }
+.bar-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.prev { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); margin-left: -1px; }
+.bars:not(.show-prev) .prev { display: none; }
+.stop-group { border-left: 3px solid var(--stop); background: var(--stop-soft); border-radius: 0 6px 6px 0; padding: 6px 8px 6px 7px; margin-left: -10px; display: flex; flex-direction: column; gap: 3px; }
+.stop-cap { font-size: 12px; font-weight: 700; color: var(--stop); }
+.level-mark { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--accent); margin: 4px 0; }
+.level-mark::after { content: ""; flex: 1; border-top: 2px solid var(--accent); }
+.more { font: inherit; font-size: 13px; color: var(--accent); background: none; border: 0; padding: 6px 0; cursor: pointer; text-align: left; }
+
+/* Heatmap */
+.heat td, .heat th { text-align: center; padding: 0; border: 0; }
+.heat th { padding: 4px 6px; font-weight: 700; }
+.heat th.rowh { text-align: right; padding-right: 10px; color: var(--ink-2); font-weight: 400; }
+.heat td div { margin: 2px; width: 72px; height: 26px; display: grid; place-items: center; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.heat td div.nr { color: var(--muted); font-weight: 400; background: transparent; border: 1px dashed var(--line); }
+.heat td div.st { outline: 2px solid var(--stop); outline-offset: -2px; }
+
+/* Stats & flags */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat .v { font-family: var(--font-display); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 13px; color: var(--ink-2); }
+.flags { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.flags li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 14px; }
+.flags .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--stop-soft); color: var(--stop); white-space: nowrap; }
+.flags .tag.info { background: var(--track); color: var(--ink-2); }
+
+.notes { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; max-width: 70ch; }
+
+#tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 13px; padding: 6px 10px; border-radius: 6px; max-width: 240px; line-height: 1.35; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  h1 { font-size: 24px; }
+  .bar-row { grid-template-columns: 54px 1fr 44px; gap: 8px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fill { transition: width 0.35s ease; }
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="who">
+      <span class="eyebrow">Foundational Skills Assessment · Student report</span>
+      <h1>Sample Student</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <span class="chip">Wireframe · demo data only</span>
+  </header>
+
+  <section class="panel hero" aria-label="Current level">
+    <div class="level">
+      <span class="eyebrow">Student's current level</span>
+      <div class="big"><b class="num" id="levelNum">11</b>of 36 items</div>
+      <span class="delta" id="levelDelta"></span>
+    </div>
+    <div class="side">
+      <div class="panel-head">
+        <h2>Next teaching targets</h2>
+        <span class="chip suggest">Suggested</span>
+      </div>
+      <p class="sub">Every item below 100% in the latest assessment. Gaps are items below the student's level. Stop points are the three items in a row that ended the assessment.</p>
+      <div class="targets" id="targets"></div>
+      <div class="facts" id="facts"></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="progTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="progTitle">Progress over time</h2>
+        <p class="sub" id="progSub">Total assessment score at each assessment. Select a point to see its item scores below.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Measure">
+        <button type="button" id="mTotal" aria-pressed="true">Total %</button>
+        <button type="button" id="mLevel" aria-pressed="false">Level (suggested)</button>
+      </div>
+    </div>
+    <div id="lineChart" role="img" aria-label="Line chart of the student's assessment results over time"></div>
+    <details class="table-view">
+      <summary>Show as a table</summary>
+      <div class="tbl-wrap"><table id="progTable"></table></div>
+    </details>
+  </section>
+
+  <section class="panel" aria-labelledby="itemTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="itemTitle">Item scores</h2>
+        <p class="sub" id="itemSub"></p>
+      </div>
+      <div class="seg" role="group" aria-label="Assessment date" id="datePick"></div>
+    </div>
+    <div class="panel-head">
+      <div class="legend">
+        <span><i class="lg-full"></i>100%</span>
+        <span><i class="lg-part"></i>Below 100%</span>
+        <span><i class="lg-stop"></i>Stop point (3 in a row below 100%)</span>
+        <span><i class="lg-none"></i>Not reached</span>
+        <span id="prevLegend" hidden><i class="lg-prev"></i>Previous assessment</span>
+      </div>
+      <label class="check"><input type="checkbox" id="showPrev" checked> Compare with previous <span class="chip suggest">Suggested</span></label>
+    </div>
+    <div class="bars" id="bars"></div>
+    <button type="button" class="more" id="moreBtn"></button>
+  </section>
+
+  <section class="panel is-suggest" aria-labelledby="sumTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sumTitle">At a glance</h2>
+        <p class="sub">Quick numbers and things worth a closer look.</p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <div class="stats" id="stats"></div>
+    <ul class="flags" id="flags"></ul>
+  </section>
+
+  <section class="panel is-suggest" aria-labelledby="heatTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="heatTitle">Item history</h2>
+        <p class="sub">Every item reached, at every assessment. Darker means a higher score. An orange outline marks where that assessment stopped.</p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <div class="tbl-wrap"><table class="heat" id="heat"></table></div>
+  </section>
+
+  <footer class="notes">
+    <p><b>How the numbers are worked out.</b> Total % is the sum of all 36 item scores divided by 3,600. Items not reached count as 0, so the total rises as the student gets further through the assessment.</p>
+    <p>Current level is the last item scored at 100% before the three items in a row that stopped the assessment.</p>
+    <p>Sections marked “Suggested” are ideas added to the original brief.</p>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const STUDENT = { year: "Year 3", school: "Example Primary School", setting: "Mainstream primary" };
+const TOTAL_ITEMS = 36;
+const A = [
+  { date: "2025-02-17", scores: [100,100,100,100,100,80,100,60,40,20] },
+  { date: "2025-08-18", scores: [100,100,100,100,100,100,100,90,100,70,50,30] },
+  { date: "2026-02-16", scores: [100,100,100,100,100,80,100,100,100,100,90,60,30] },
+  { date: "2026-08-17", scores: [100,100,100,100,100,90,100,100,100,100,100,80,60,40] },
+].map(analyse);
+
+function analyse(a) {
+  const s = a.scores;
+  let runStart = -1;
+  for (let i = 2; i < s.length; i++) {
+    if (s[i] < 100 && s[i-1] < 100 && s[i-2] < 100) { runStart = i - 2; break; }
+  }
+  const limit = runStart === -1 ? s.length : runStart;
+  let level = 0;
+  for (let i = 0; i < limit; i++) if (s[i] === 100) level = i + 1;
+  const total = s.reduce((t, v) => t + v, 0) / (TOTAL_ITEMS * 100) * 100;
+  const stopItems = runStart === -1 ? [] : [runStart + 1, runStart + 2, runStart + 3];
+  const gaps = [];
+  for (let i = 0; i < level; i++) if (s[i] < 100) gaps.push(i + 1);
+  return { ...a, level, total, stopItems, gaps, reached: s.length };
+}
+
+const $ = (q) => document.querySelector(q);
+const fmtDate = (d, short) => new Date(d + "T00:00:00").toLocaleDateString("en-AU",
+  short ? { month: "short", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
+const pct = (v) => (Math.round(v * 10) / 10).toFixed(1) + "%";
+const latest = A[A.length - 1];
+const state = { metric: "total", sel: A.length - 1, showAll: false };
+
+/* Header and hero */
+$("#meta").innerHTML = [
+  STUDENT.year, STUDENT.school, STUDENT.setting,
+  "In the program since " + fmtDate(A[0].date),
+  A.length + " assessments",
+].map((t) => "<span>" + t + "</span>").join("");
+
+const prev = A[A.length - 2];
+const dl = latest.level - prev.level;
+$("#levelNum").textContent = latest.level;
+$("#levelDelta").textContent = (dl > 0 ? "Up " + dl : dl < 0 ? "Down " + -dl : "No change") +
+  " since " + fmtDate(prev.date) + " · assessed " + fmtDate(latest.date);
+$("#targets").innerHTML =
+  latest.gaps.map((n) =>
+    `<div class="target gap"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Gap below level</span></div>`).join("") +
+  latest.stopItems.map((n) =>
+    `<div class="target"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Stop point</span></div>`).join("");
+$("#facts").innerHTML =
+  `<span>Latest total <b class="num">${pct(latest.total)}</b></span>` +
+  `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
+  `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
+
+/* Tooltip */
+const tip = $("#tip");
+function showTip(el, x, y) {
+  tip.textContent = el.getAttribute("data-tip");
+  tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y + 14;
+  if (left + r.width > innerWidth - 8) left = x - r.width - 14;
+  if (top + r.height > innerHeight - 8) top = y - r.height - 14;
+  tip.style.left = Math.max(8, left) + "px";
+  tip.style.top = Math.max(8, top) + "px";
+}
+document.addEventListener("pointermove", (e) => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if (el) showTip(el, e.clientX, e.clientY); else tip.hidden = true;
+});
+document.addEventListener("focusin", (e) => {
+  const el = e.target.closest("[data-tip]");
+  if (el) { const r = el.getBoundingClientRect(); showTip(el, r.right, r.top); }
+});
+document.addEventListener("focusout", () => { tip.hidden = true; });
+
+/* Line chart */
+function niceMax(v, step) { return Math.ceil((v + step * 0.5) / step) * step; }
+function drawLine() {
+  const el = $("#lineChart");
+  const W = Math.max(300, el.clientWidth), H = W < 520 ? 230 : 280;
+  const m = { t: 28, r: 56, b: 34, l: 44 };
+  const isTotal = state.metric === "total";
+  const vals = A.map((a) => isTotal ? a.total : a.level);
+  const step = isTotal ? 10 : 2;
+  const maxV = niceMax(Math.max(...vals), step);
+  const ts = A.map((a) => +new Date(a.date));
+  const t0 = ts[0], t1 = ts[ts.length - 1];
+  const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
+  const y = (v) => H - m.b - v / maxV * (H - m.t - m.b);
+  let g = "";
+  for (let v = 0; v <= maxV; v += step) {
+    g += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    g += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${v}${isTotal ? "%" : ""}</text>`;
+  }
+  A.forEach((a, i) => {
+    const anchor = i === 0 ? "start" : i === A.length - 1 ? "end" : "middle";
+    const lbl = W < 520 ? new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" }) : fmtDate(a.date, true);
+    g += `<text class="axis-text" x="${x(ts[i])}" y="${H - 10}" text-anchor="${anchor}">${lbl}</text>`;
+  });
+  const pts = A.map((a, i) => [x(ts[i]), y(vals[i])]);
+  const path = pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
+  const area = path + ` L${pts[pts.length-1][0]} ${y(0)} L${pts[0][0]} ${y(0)} Z`;
+  let marks = `<path d="${area}" fill="var(--accent)" fill-opacity="0.10"/>`;
+  marks += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p, i) => {
+    const sel = i === state.sel, last = i === pts.length - 1;
+    marks += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 7 : 5}" fill="${sel || last ? "var(--accent)" : "var(--surface)"}" stroke="${sel ? "var(--ink)" : "var(--accent)"}" stroke-width="2"/>`;
+  });
+  const lp = pts[pts.length - 1];
+  marks += `<text x="${lp[0] + 10}" y="${lp[1] + 4}" fill="var(--ink)" font-size="13" font-weight="700" class="num" font-family="var(--font-body)">${isTotal ? pct(vals[vals.length-1]) : "Level " + vals[vals.length-1]}</text>`;
+  pts.forEach((p, i) => {
+    const a = A[i];
+    marks += `<circle class="pt-hit" tabindex="0" role="button" data-i="${i}" cx="${p[0]}" cy="${p[1]}" r="16" data-tip="${fmtDate(a.date)}: total ${pct(a.total)}, level ${a.level}, stopped at item ${a.stopItems[2] || a.reached}"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${marks}</svg>`;
+  el.querySelectorAll(".pt-hit").forEach((c) => {
+    const pick = () => { state.sel = +c.dataset.i; renderAll(); };
+    c.addEventListener("click", pick);
+    c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  });
+  $("#progSub").textContent = isTotal
+    ? "Total assessment score at each assessment. Select a point to see its item scores below."
+    : "Level reached at each assessment. Select a point to see its item scores below.";
+}
+
+$("#progTable").innerHTML = "<tr><th>Date</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
+  A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+
+function setMetric(mm) {
+  state.metric = mm;
+  $("#mTotal").setAttribute("aria-pressed", mm === "total");
+  $("#mLevel").setAttribute("aria-pressed", mm === "level");
+  drawLine();
+}
+$("#mTotal").onclick = () => setMetric("total");
+$("#mLevel").onclick = () => setMetric("level");
+
+/* Item bars */
+$("#datePick").innerHTML = A.map((a, i) =>
+  `<button type="button" data-i="${i}">${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</button>`).join("");
+$("#datePick").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.sel = +b.dataset.i; renderAll();
+});
+$("#showPrev").addEventListener("change", renderBars);
+$("#moreBtn").addEventListener("click", () => { state.showAll = !state.showAll; renderBars(); });
+
+function barRow(a, p, n) {
+  const v = a.scores[n - 1];
+  const reached = v !== undefined;
+  const isStop = a.stopItems.includes(n);
+  const cls = !reached ? "none" : isStop ? "stop" : v === 100 ? "full" : "part";
+  const pv = p ? p.scores[n - 1] : undefined;
+  const prevMark = p && pv !== undefined ? `<i class="prev" style="left:${pv}%"></i>` : "";
+  let t = `Item ${n}: ` + (reached ? v + "%" : "not reached");
+  if (p) t += pv !== undefined ? ` (previous ${pv}%)` : " (not reached previously)";
+  return `<div class="bar-row ${cls}" tabindex="0" data-tip="${t}">
+    <span class="bar-label">Item ${n}</span>
+    <div class="track"><div class="fill" style="width:${reached ? v : 0}%"></div>${prevMark}</div>
+    <span class="bar-val">${reached ? v + "%" : "—"}</span></div>`;
+}
+function renderBars() {
+  const a = A[state.sel];
+  const p = $("#showPrev").checked && state.sel > 0 ? A[state.sel - 1] : null;
+  $("#bars").classList.toggle("show-prev", !!p);
+  $("#prevLegend").hidden = !p;
+  const shown = state.showAll ? TOTAL_ITEMS : Math.min(TOTAL_ITEMS, a.reached + 3);
+  let h = "";
+  for (let n = 1; n <= shown; n++) {
+    if (n === a.stopItems[0]) h += `<div class="stop-group"><span class="stop-cap">Assessment stopped here: three items in a row below 100%</span>`;
+    h += barRow(a, p, n);
+    if (n === a.stopItems[2]) h += `</div>`;
+    if (n === a.level) h += `<div class="level-mark">Level ${a.level}</div>`;
+  }
+  $("#bars").innerHTML = h;
+  $("#moreBtn").textContent = state.showAll
+    ? "Hide items not reached"
+    : `Show all 36 items (items ${shown + 1}–36 not reached)`;
+  $("#itemSub").textContent = `Assessment on ${fmtDate(a.date)}: level ${a.level}, total ${pct(a.total)}.` +
+    (p ? ` The dark tick shows the score on ${fmtDate(p.date)}.` : "");
+  $("#datePick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.i === state.sel));
+}
+
+/* Stats and flags */
+(function renderSummary() {
+  const first = A[0];
+  const days = Math.round((Date.now() - new Date(latest.date + "T00:00:00")) / 864e5);
+  const gapDays = (new Date(latest.date) - new Date(first.date)) / 864e5 / (A.length - 1);
+  const months = ((new Date(latest.date) - new Date(first.date)) / 864e5 / 30.44);
+  const mastered = latest.scores.filter((v) => v === 100).length;
+  $("#stats").innerHTML = [
+    [`+${latest.level - first.level}`, `Levels gained since first assessment (${first.level} to ${latest.level})`],
+    [mastered, "Items at 100% in the latest assessment"],
+    [(months / (latest.level - first.level)).toFixed(1), "Months per level gained, on average"],
+    [days, `Days since last assessment (they are about ${Math.round(gapDays / 30.44)} months apart)`],
+  ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
+
+  const flags = [];
+  latest.gaps.forEach((n) => {
+    const hist = A.map((a) => a.scores[n - 1]).filter((v) => v !== undefined);
+    const wasFull = hist.slice(0, -1).includes(100);
+    flags.push(["Gap", `Item ${n} is below the student's level at ${latest.scores[n-1]}%.` +
+      (wasFull ? ` It was 100% before, so this skill may be slipping.` : "")]);
+  });
+  for (let n = 1; n <= latest.reached; n++) {
+    const hist = A.map((a) => a.scores[n - 1]).filter((v) => v !== undefined);
+    if (latest.scores[n-1] < 100 && hist.length >= 3 && hist.every((v) => v < 100)) {
+      flags.push(["Stuck", `Item ${n} has been below 100% in all ${hist.length} assessments that reached it (${hist.join("%, ")}%). It may need a different teaching approach.`]);
+    }
+  }
+  for (let n = 1; n <= latest.reached; n++) {
+    const hist = A.map((a) => a.scores[n - 1]);
+    const firstFull = hist.findIndex((v) => v === 100);
+    if (firstFull === A.length - 1 && hist.slice(0, -1).some((v) => v !== undefined)) {
+      flags.push(["New", `Item ${n} reached 100% for the first time on ${fmtDate(latest.date)}.`]);
+    }
+  }
+  $("#flags").innerHTML = flags.map(([t, s]) =>
+    `<li><span class="tag ${t === "New" ? "info" : ""}">${t}</span><span>${s}</span></li>`).join("");
+})();
+
+/* Heatmap */
+(function renderHeat() {
+  const maxReached = Math.max(...A.map((a) => a.reached));
+  let h = "<tr><th></th>" + A.map((a) => `<th>${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</th>`).join("") + "</tr>";
+  for (let n = 1; n <= maxReached; n++) {
+    h += `<tr><th class="rowh">Item ${n}</th>`;
+    A.forEach((a) => {
+      const v = a.scores[n - 1];
+      if (v === undefined) { h += `<td><div class="nr" data-tip="Item ${n}, ${fmtDate(a.date)}: not reached">·</div></td>`; return; }
+      const mix = 12 + v * 0.88;
+      const ink = v >= 70 ? "var(--on-accent)" : "var(--ink)";
+      const st = a.stopItems.includes(n) ? " st" : "";
+      h += `<td><div class="num${st}" tabindex="0" style="background:color-mix(in oklab, var(--accent) ${mix}%, var(--surface));color:${ink}" data-tip="Item ${n}, ${fmtDate(a.date)}: ${v}%${st ? " (stop point)" : ""}">${v}</div></td>`;
+    });
+    h += "</tr>";
+  }
+  h += `<tr><th class="rowh">Items ${maxReached + 1}–36</th><td colspan="${A.length}" style="color:var(--muted);font-size:13px;padding:6px">Not reached yet</td></tr>`;
+  $("#heat").innerHTML = h;
+})();
+
+function renderAll() { drawLine(); renderBars(); }
+renderAll();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawLine, 120); });
+</script>
