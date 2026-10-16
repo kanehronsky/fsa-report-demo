@@ -56,7 +56,9 @@ p { margin: 0; }
 .head .who { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-2); font-size: 14px; }
 .head-tools { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.seg-lg button { font-size: 14px; padding: 8px 20px; }
+.type-badge { display: flex; align-items: baseline; gap: 10px; border: 2px solid var(--accent); border-radius: 8px; padding: 6px 14px; background: var(--surface); }
+.type-badge span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 700; }
+.type-badge strong { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--accent); }
 @media (max-width: 720px) { .head-tools { align-items: flex-start; } }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); white-space: nowrap; }
 .chip.suggest { color: var(--suggest); background: var(--suggest-soft); border-color: transparent; }
@@ -176,10 +178,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
     </div>
     <div class="head-tools">
       <span class="chip">Wireframe · demo data only</span>
-      <div class="seg seg-lg" role="group" aria-label="Assessment version" id="typePick">
-        <button type="button" data-t="standard" aria-pressed="true">Standard</button>
-        <button type="button" data-t="aac" aria-pressed="false">AAC</button>
-      </div>
+      <div class="type-badge"><span>Assessment type</span><strong id="typeBadge">Standard</strong></div>
     </div>
   </header>
 
@@ -266,14 +265,14 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> Total % is the sum of all 36 item scores divided by 3,600. Items not reached count as 0, so the total rises as the student gets further through the assessment.</p>
     <p>Current level is the last item scored at 100% before the three items in a row that stopped the assessment.</p>
-    <p>The Standard and AAC versions are tracked separately. Each has its own level, history and teaching targets. Use the toggle at the top to switch between them.</p>
+    <p>There are two versions of the assessment, Standard and AAC. A student starts on one and stays on it, so the report shows one version only. The label at the top says which.</p>
     <p>Sections marked “Suggested” are ideas added to the original brief.</p>
   </footer>
 </div>
 <div id="tip" hidden></div>
 
 <script>
-const STUDENT = { year: "Year 3", school: "Example Primary School", setting: "Mainstream primary" };
+const STUDENT = { year: "Year 3", school: "Example Primary School", setting: "Mainstream primary", assessmentType: "standard" };
 const TOTAL_ITEMS = 36;
 const DATA = {
   standard: [
@@ -317,7 +316,7 @@ const typeName = () => state.type === "aac" ? "AAC" : "Standard";
 function renderHero() {
 $("#meta").innerHTML = [
   STUDENT.year, STUDENT.school, STUDENT.setting,
-  `${typeName()} version: ${A.length} assessments since ${fmtDate(A[0].date)}`,
+  `${A.length} assessments since ${fmtDate(A[0].date)}`,
 ].map((t) => "<span>" + t + "</span>").join("");
 
 const prev = A[A.length - 2];
@@ -536,13 +535,9 @@ function load(type) {
   latest = A[A.length - 1];
   state.sel = A.length - 1;
   state.showAll = false;
-  document.querySelectorAll("#typePick button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.t === type));
+  $("#typeBadge").textContent = typeName();
   renderHero(); renderTable(); renderDatePick(); renderSummary(); renderHeat(); renderAll();
 }
-$("#typePick").addEventListener("click", (e) => {
-  const b = e.target.closest("button");
-  if (b && b.dataset.t !== state.type) load(b.dataset.t);
-});
-load("standard");
+load(STUDENT.assessmentType);
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawLine, 120); });
 </script>
