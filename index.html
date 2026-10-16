@@ -55,6 +55,9 @@ p { margin: 0; }
 .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
 .head .who { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-2); font-size: 14px; }
+.head-tools { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.seg-lg button { font-size: 14px; padding: 8px 20px; }
+@media (max-width: 720px) { .head-tools { align-items: flex-start; } }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); white-space: nowrap; }
 .chip.suggest { color: var(--suggest); background: var(--suggest-soft); border-color: transparent; }
 
@@ -171,12 +174,18 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
       <h1>Sample Student</h1>
       <div class="meta" id="meta"></div>
     </div>
-    <span class="chip">Wireframe · demo data only</span>
+    <div class="head-tools">
+      <span class="chip">Wireframe · demo data only</span>
+      <div class="seg seg-lg" role="group" aria-label="Assessment version" id="typePick">
+        <button type="button" data-t="standard" aria-pressed="true">Standard</button>
+        <button type="button" data-t="aac" aria-pressed="false">AAC</button>
+      </div>
+    </div>
   </header>
 
   <section class="panel hero" aria-label="Current level">
     <div class="level">
-      <span class="eyebrow">Student's current level</span>
+      <span class="eyebrow" id="levelEyebrow">Student's current level</span>
       <div class="big"><b class="num" id="levelNum">11</b>of 36 items</div>
       <span class="delta" id="levelDelta"></span>
     </div>
@@ -257,6 +266,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> Total % is the sum of all 36 item scores divided by 3,600. Items not reached count as 0, so the total rises as the student gets further through the assessment.</p>
     <p>Current level is the last item scored at 100% before the three items in a row that stopped the assessment.</p>
+    <p>The Standard and AAC versions are tracked separately. Each has its own level, history and teaching targets. Use the toggle at the top to switch between them.</p>
     <p>Sections marked “Suggested” are ideas added to the original brief.</p>
   </footer>
 </div>
@@ -265,12 +275,19 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 <script>
 const STUDENT = { year: "Year 3", school: "Example Primary School", setting: "Mainstream primary" };
 const TOTAL_ITEMS = 36;
-const A = [
-  { date: "2025-02-17", scores: [100,100,100,100,100,80,100,60,40,20] },
-  { date: "2025-08-18", scores: [100,100,100,100,100,100,100,90,100,70,50,30] },
-  { date: "2026-02-16", scores: [100,100,100,100,100,80,100,100,100,100,90,60,30] },
-  { date: "2026-08-17", scores: [100,100,100,100,100,90,100,100,100,100,100,80,60,40] },
-].map(analyse);
+const DATA = {
+  standard: [
+    { date: "2025-02-17", scores: [100,100,100,100,100,80,100,60,40,20] },
+    { date: "2025-08-18", scores: [100,100,100,100,100,100,100,90,100,70,50,30] },
+    { date: "2026-02-16", scores: [100,100,100,100,100,80,100,100,100,100,90,60,30] },
+    { date: "2026-08-17", scores: [100,100,100,100,100,90,100,100,100,100,100,80,60,40] },
+  ],
+  aac: [
+    { date: "2025-05-12", scores: [100,100,100,100,70,40,20] },
+    { date: "2025-11-10", scores: [100,100,100,100,100,90,100,70,50,40] },
+    { date: "2026-05-11", scores: [100,100,100,100,100,100,100,80,100,90,60,30] },
+  ],
+};
 
 function analyse(a) {
   const s = a.scores;
@@ -292,21 +309,24 @@ const $ = (q) => document.querySelector(q);
 const fmtDate = (d, short) => new Date(d + "T00:00:00").toLocaleDateString("en-AU",
   short ? { month: "short", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
 const pct = (v) => (Math.round(v * 10) / 10).toFixed(1) + "%";
-const latest = A[A.length - 1];
-const state = { metric: "total", sel: A.length - 1, showAll: false };
+let A = [], latest = null;
+const state = { type: "standard", metric: "total", sel: 0, showAll: false };
+const typeName = () => state.type === "aac" ? "AAC" : "Standard";
 
 /* Header and hero */
+function renderHero() {
 $("#meta").innerHTML = [
   STUDENT.year, STUDENT.school, STUDENT.setting,
-  "In the program since " + fmtDate(A[0].date),
-  A.length + " assessments",
+  `${typeName()} version: ${A.length} assessments since ${fmtDate(A[0].date)}`,
 ].map((t) => "<span>" + t + "</span>").join("");
 
 const prev = A[A.length - 2];
-const dl = latest.level - prev.level;
+$("#levelEyebrow").textContent = `Student's current level (${typeName()})`;
 $("#levelNum").textContent = latest.level;
-$("#levelDelta").textContent = (dl > 0 ? "Up " + dl : dl < 0 ? "Down " + -dl : "No change") +
-  " since " + fmtDate(prev.date) + " · assessed " + fmtDate(latest.date);
+const dl = prev ? latest.level - prev.level : 0;
+$("#levelDelta").textContent = (prev
+  ? (dl > 0 ? "Up " + dl : dl < 0 ? "Down " + -dl : "No change") + " since " + fmtDate(prev.date)
+  : "First assessment") + " · assessed " + fmtDate(latest.date);
 $("#targets").innerHTML =
   latest.gaps.map((n) =>
     `<div class="target gap"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Gap below level</span></div>`).join("") +
@@ -316,6 +336,7 @@ $("#facts").innerHTML =
   `<span>Latest total <b class="num">${pct(latest.total)}</b></span>` +
   `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
   `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
+}
 
 /* Tooltip */
 const tip = $("#tip");
@@ -389,8 +410,10 @@ function drawLine() {
     : "Level reached at each assessment. Select a point to see its item scores below.";
 }
 
+function renderTable() {
 $("#progTable").innerHTML = "<tr><th>Date</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
   A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+}
 
 function setMetric(mm) {
   state.metric = mm;
@@ -402,8 +425,10 @@ $("#mTotal").onclick = () => setMetric("total");
 $("#mLevel").onclick = () => setMetric("level");
 
 /* Item bars */
+function renderDatePick() {
 $("#datePick").innerHTML = A.map((a, i) =>
   `<button type="button" data-i="${i}">${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</button>`).join("");
+}
 $("#datePick").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   state.sel = +b.dataset.i; renderAll();
@@ -448,7 +473,7 @@ function renderBars() {
 }
 
 /* Stats and flags */
-(function renderSummary() {
+function renderSummary() {
   const first = A[0];
   const days = Math.round((Date.now() - new Date(latest.date + "T00:00:00")) / 864e5);
   const gapDays = (new Date(latest.date) - new Date(first.date)) / 864e5 / (A.length - 1);
@@ -482,11 +507,12 @@ function renderBars() {
     }
   }
   $("#flags").innerHTML = flags.map(([t, s]) =>
-    `<li><span class="tag ${t === "New" ? "info" : ""}">${t}</span><span>${s}</span></li>`).join("");
-})();
+    `<li><span class="tag ${t === "New" ? "info" : ""}">${t}</span><span>${s}</span></li>`).join("") ||
+    `<li><span class="tag info">None</span><span>Nothing flagged for this version.</span></li>`;
+}
 
 /* Heatmap */
-(function renderHeat() {
+function renderHeat() {
   const maxReached = Math.max(...A.map((a) => a.reached));
   let h = "<tr><th></th>" + A.map((a) => `<th>${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</th>`).join("") + "</tr>";
   for (let n = 1; n <= maxReached; n++) {
@@ -503,9 +529,22 @@ function renderBars() {
   }
   h += `<tr><th class="rowh">Items ${maxReached + 1}–36</th><td colspan="${A.length}" style="color:var(--muted);font-size:13px;padding:6px">Not reached yet</td></tr>`;
   $("#heat").innerHTML = h;
-})();
+}
 
 function renderAll() { drawLine(); renderBars(); }
-renderAll();
+function load(type) {
+  state.type = type;
+  A = DATA[type].map(analyse);
+  latest = A[A.length - 1];
+  state.sel = A.length - 1;
+  state.showAll = false;
+  document.querySelectorAll("#typePick button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.t === type));
+  renderHero(); renderTable(); renderDatePick(); renderSummary(); renderHeat(); renderAll();
+}
+$("#typePick").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b && b.dataset.t !== state.type) load(b.dataset.t);
+});
+load("standard");
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawLine, 120); });
 </script>
