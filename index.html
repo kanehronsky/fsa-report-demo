@@ -171,6 +171,18 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 720px) { .parts { grid-template-columns: 1fr; } .cmp-row { grid-template-columns: 80px 1fr; } .cmp-row .val { grid-column: 2; } }
 
+/* Viewer switch (wireframe only) */
+.viewer { max-width: 980px; margin: 0 auto 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 14px; border: 1px dashed color-mix(in oklab, var(--suggest) 45%, var(--line)); border-radius: 10px; background: var(--suggest-soft); }
+.viewer .field { color: var(--suggest); }
+.chip.admin { color: var(--suggest); border-color: var(--suggest); }
+.status.warn { background: var(--warn-soft); color: var(--warn); }
+.status.crit { background: var(--crit); color: var(--on-crit); }
+select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
+.ramp { display: inline-flex; align-items: center; gap: 4px; }
+.ramp i { margin: 0 !important; }
+.lg-dot { width: 9px !important; height: 9px !important; border-radius: 50% !important; background: var(--ink); opacity: .75; }
+.sig-grid tbody th { white-space: nowrap; }
+
 /* Report-level tabs and pickers */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .tabs a { font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; color: var(--ink-2); padding: 8px 14px; border-bottom: 3px solid transparent; margin-bottom: -1px; }
@@ -258,12 +270,13 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 </style>
 
 <!-- ============ TEACHER VIEW ============ -->
+<div class="viewer" role="region" aria-label="Wireframe viewer switch">
+  <label class="field" for="role">Viewing as <select id="role"></select></label>
+  <span class="sub">Wireframe only: switch to see what each person can access.</span>
+</div>
+
 <div class="wrap" id="teacherView">
-  <nav class="tabs" aria-label="Report level">
-    <a href="#teacher" id="nav-teacher">Teacher</a>
-    <a href="#yeargroup" id="nav-yg">Year group</a>
-    <a href="#school">School</a>
-  </nav>
+  <nav class="tabs" id="t-tabs" aria-label="Report level"></nav>
   <header class="head">
     <div class="who">
       <span class="eyebrow" id="t-eyebrow"></span>
@@ -370,11 +383,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 
 <!-- ============ SCHOOL VIEW ============ -->
 <div class="wrap" id="schoolView" hidden>
-  <nav class="tabs" aria-label="Report level">
-    <a href="#teacher">Teacher</a>
-    <a href="#yeargroup">Year group</a>
-    <a href="#school" aria-current="page">School</a>
-  </nav>
+  <nav class="tabs" id="sc-tabs" aria-label="Report level"></nav>
   <header class="head">
     <div class="who">
       <span class="eyebrow">Foundational Skills Assessment · School report</span>
@@ -399,7 +408,6 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
         <p class="sub">Average levels gained per student in each school year, from their first to their last assessment that year.</p>
       </div>
     </div>
-    <div class="legend"><span><i class="lg-full"></i><span id="sc-legendSchool">This school</span></span><span><i class="lg-bench"></i>Average across all schools</span></div>
     <div class="chart" id="sc-yearChart" role="img" aria-label="Bar chart of average levels gained per student each year"></div>
     <div class="tbl-wrap"><table id="sc-yearTable"></table></div>
   </section>
@@ -407,14 +415,12 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <section class="panel" aria-labelledby="sc-sigTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="sc-sigTitle">Item signals</h2>
-        <p class="sub">For each item: of the students who were working on it at the start of the year, how many had it at 100% by the end? Each school is compared with the average across all schools. Select a square to see that item below.</p>
+        <h2 id="sc-sigTitle">Item reach rates</h2>
+        <p class="sub">For each item: of the students who were working on it at the start of the year, how many had it at 100% by the end. Darker means more students reached it. Select a square to see that item below.</p>
       </div>
     </div>
     <div class="legend">
-      <span><i class="sig-key ok"></i>Similar to or better than all schools</span>
-      <span><i class="sig-key below">!</i>Below: behind, with less than a 1 in 10 chance it's luck</span>
-      <span><i class="sig-key well">!!</i>Well below: behind, with less than a 1 in 50 chance it's luck</span>
+      <span class="ramp"><span>0%</span><i style="background:color-mix(in oklab, var(--accent) 10%, var(--surface))"></i><i style="background:color-mix(in oklab, var(--accent) 55%, var(--surface))"></i><i style="background:var(--accent)"></i><span>100%</span></span>
       <span><i class="sig-key few"></i>Fewer than 3 students working on it</span>
     </div>
     <div class="tbl-wrap"><table class="sig-grid" id="sc-grid"></table></div>
@@ -423,8 +429,8 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <section class="panel" aria-labelledby="sc-watchTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="sc-watchTitle">Items to look at</h2>
-        <p class="sub" id="sc-watchSub"></p>
+        <h2 id="sc-watchTitle">Hardest items</h2>
+        <p class="sub">The items your students reached 100% on least often this year, from at least 3 students working on each.</p>
       </div>
     </div>
     <ul class="flags" id="sc-watch"></ul>
@@ -457,9 +463,86 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> A student is “working on” an item if it was one of their teaching targets at their first assessment of the year: a gap below their level, or one of the three items where the assessment stopped. The item counts as reached if they scored 100% on it at their last assessment that year.</p>
-    <p>An item is only flagged when the school is behind by more than chance would explain, given how many students were working on it. For example, 1 of 4 students against an average of 50% isn't flagged, but 3 of 12 is. Nothing is flagged with fewer than 3 students.</p>
-    <p>In this demo, “all schools” also includes 12 other made-up schools that stand in for the rest of the program.</p>
-    <p>A flag doesn't say why a school is behind. It's a prompt to look closer and to offer training or support where it would help.</p>
+    <p id="sc-ownNote"></p>
+  </footer>
+</div>
+
+<!-- ============ PROGRAM VIEW ============ -->
+<div class="wrap" id="programView" hidden>
+  <nav class="tabs" id="pg-tabs" aria-label="Report level"></nav>
+  <header class="head">
+    <div class="who">
+      <span class="eyebrow">Foundational Skills Assessment · Program report</span>
+      <h1>Whole program</h1>
+      <div class="meta" id="pg-meta"></div>
+    </div>
+    <div class="head-tools">
+      <div class="pickers">
+        <span class="chip">Wireframe · demo data only</span>
+        <span class="chip admin">Program administrators only</span>
+      </div>
+      <div class="seg seg-lg" role="group" aria-label="School year" id="pg-years"></div>
+    </div>
+  </header>
+
+  <section class="stats four" id="pg-stats" aria-label="Program summary"></section>
+
+  <section class="panel" aria-labelledby="pg-yearTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="pg-yearTitle">Progress year by year</h2>
+        <p class="sub">Average levels gained per student across the program each year. Each dot beside a bar is one school.</p>
+      </div>
+    </div>
+    <div class="legend"><span><i class="lg-full" style="opacity:.35"></i>Whole program</span><span><i class="lg-dot"></i>One school</span></div>
+    <div class="chart" id="pg-yearChart" role="img" aria-label="Bar chart of program levels gained per year, with a dot for each school"></div>
+    <div class="tbl-wrap"><table id="pg-yearTable"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="pg-schoolsTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="pg-schoolsTitle">Schools</h2>
+        <p class="sub">Schools marked “Check in” have 2 or more flagged items, or students who gained 0.3 levels or more below the program average. Select a school to open its report.</p>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="class-table" id="pg-schools"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="pg-sigTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="pg-sigTitle">Item signals by school</h2>
+        <p class="sub" id="pg-sigSub"></p>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="sig-key ok"></i>Similar to or better than the program</span>
+      <span><i class="sig-key below">!</i>Below: behind, with less than a 1 in 10 chance it's luck</span>
+      <span><i class="sig-key well">!!</i>Well below: behind, with less than a 1 in 50 chance it's luck</span>
+      <span><i class="sig-key few"></i>Fewer than 3 students working on it</span>
+    </div>
+    <div class="tbl-wrap"><table class="sig-grid" id="pg-grid"></table></div>
+    <div class="subhead"><h3 id="pg-detailTitle"></h3></div>
+    <div class="compare" id="pg-detail"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="pg-hardTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="pg-hardTitle">Items that are hard everywhere</h2>
+        <p class="sub">How often students across the whole program reached 100% on each item they were working on. An item that is low in most schools may point to the item, its resources or the training, rather than to any one school.</p>
+      </div>
+    </div>
+    <div class="legend"><span><i class="lg-full"></i>Reach rate</span><span><i style="background:var(--warn)"></i>The 4 lowest</span></div>
+    <div class="chart" id="pg-items" role="img" aria-label="Bar chart of the program reach rate for each item"></div>
+    <ul class="flags" id="pg-hard"></ul>
+  </section>
+
+  <footer class="notes">
+    <p><b>Who can see this.</b> Only program administrators. School staff can see their own school, year groups, classes and students, but nothing from other schools, including these comparisons.</p>
+    <p>An item is only flagged when a school is behind by more than chance would explain, given how many students were working on it. For example, 1 of 4 students against a program average of 50% isn't flagged, but 3 of 12 is.</p>
+    <p>A flag or a “Check in” doesn't say why a school is behind. It's a prompt to look closer and offer training or support where it would help.</p>
   </footer>
 </div>
 
@@ -599,6 +682,18 @@ const SCHOOLS = {
     "Room 3": { teacher: "Teacher J", setting: "Year 3 and Year 4" },
   } },
 };
+// The rest of the program: 12 more generated schools. Their teachers are numbered within each school.
+[["D", 1.0, {}], ["E", 1.1, {}], ["F", 0.95, { 12: [2025, 2026] }], ["G", 1.05, {}], ["H", 0.9, {}], ["I", 1.0, {}],
+ ["J", 0.95, { 7: [2024, 2025, 2026] }], ["K", 1.1, {}], ["L", 1.0, {}], ["M", 0.75, {}], ["N", 1.0, { 4: [2026] }], ["O", 1.05, {}],
+].forEach(([code, g, hard]) => {
+  SCHOOLS[code] = { name: "School " + code, g, hard, rooms: {
+    "Room 1": { teacher: "Teacher 1", setting: "Pre-primary and Year 1" },
+    "Room 2": { teacher: "Teacher 2", setting: "Year 1 and Year 2" },
+    "Room 3": { teacher: "Teacher 3", setting: "Year 3 and Year 4" },
+  } };
+});
+// Items that are hard in every school. These show up at program level, not as a problem for any one school.
+const PROGRAM_HARD = { 10: [2024, 2025, 2026] };
 // Room 4 at School A is an education support class, so its students are listed by hand.
 const ROOM4 = {
   2024: ["s01", "s02", "s03", "s04", "s05"],
@@ -669,7 +764,7 @@ function genSpecs(code, names) {
       const first = yl === 0 ? 4 : yl === 1 ? 2 : 0;
       const startYl = yl - (2026 - ROUNDS[first].year);
       const sp = {
-        id: code.toLowerCase() + String(k + 1).padStart(2, "0"), name: names ? names[k] : `${code} student ${k + 1}`, school: code, yl,
+        id: code.toLowerCase() + String(k + 1).padStart(2, "0"), name: names ? names[k] : madeUpName(rng), school: code, yl,
         type: rng() < 0.15 ? "aac" : "standard", first, last: 5,
         L0: 1 + startYl * 2 + Math.floor(rng() * 3), g: 0.8 + rng() * 0.7,
         gaps: rng() < 0.3 ? [2 + Math.floor(rng() * 8)] : [],
@@ -682,11 +777,14 @@ function genSpecs(code, names) {
   }
   return out;
 }
+const FIRST_NAMES = ["Ada", "Alfie", "Bella", "Billy", "Cooper", "Daisy", "Eddie", "Elsie", "Ezra", "Florence", "George", "Hattie",
+  "Indi", "Jasper", "Jude", "Lacey", "Lenny", "Lucy", "Milo", "Nell", "Ned", "Odette", "Ollie", "Pearl", "Remy", "Rosie",
+  "Sami", "Stella", "Toby", "Tilly", "Vince", "Wren", "Xavier", "Yara", "Zane", "Zoe"];
+function madeUpName(rng) {
+  return FIRST_NAMES[Math.floor(rng() * FIRST_NAMES.length)] + " " + "ABCDEFGHJKLMNPRSTVW"[Math.floor(rng() * 19)] + ".";
+}
 STUDENT_SPECS.push(...genSpecs("B", NAMES.B), ...genSpecs("C", NAMES.C));
-// The rest of the program: 12 more made-up schools. They are not shown on their own,
-// but they go into the "all schools" average, the way the rest of the state will in real data.
-const BG_CODES = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"];
-const BG_SCHOOL = { g: 1, hard: {}, rooms: {} };
+Object.keys(SCHOOLS).filter((c) => !["A", "B", "C"].includes(c)).forEach((c) => STUDENT_SPECS.push(...genSpecs(c)));
 
 const ylNum = (st, y) => st.yl - (2026 - y);
 const ylName = (n) => n < 0 ? "Kindergarten" : n === 0 ? "Pre-primary" : "Year " + n;
@@ -748,9 +846,10 @@ function buildStudent(sp) {
   const start = +new Date(slots[0].date);
   const assessments = slots.map((sl) => {
     const halfYears = (+new Date(sl.date) - start) / (182 * 864e5);
-    const sch = SCHOOLS[sp.school] || BG_SCHOOL;
+    const sch = SCHOOLS[sp.school];
     const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * sch.g * halfYears + rng() * 1.4 - 0.7)));
-    const hard = Object.keys(sch.hard).filter((n) => sch.hard[n].includes(sl.year)).map(Number);
+    const allHard = { ...PROGRAM_HARD, ...sch.hard };
+    const hard = Object.keys(allHard).filter((n) => allHard[n].includes(sl.year)).map(Number);
     return analyse({ ...sl, cls: roomOf(sp, sl.year), yearLevel: ylNum(sp, sl.year), scores: genScores(ability, sp.gaps, rng, hard) });
   });
   const byRound = {};
@@ -758,7 +857,6 @@ function buildStudent(sp) {
   return { ...sp, assessments, byRound };
 }
 const STUDENTS = STUDENT_SPECS.map(buildStudent);
-const ALL_STUDENTS = STUDENTS.concat(BG_CODES.flatMap((c) => genSpecs(c)).map(buildStudent));
 const BY_ID = Object.fromEntries(STUDENTS.map((s) => [s.id, s]));
 
 /* ---------- Helpers ---------- */
@@ -847,7 +945,7 @@ function lineChart(el, cfg) {
 
 /* ================= GROUP VIEW (teacher or year group) ================= */
 // mode "teacher": one class, chosen by room. mode "yeargroup": every student at one year level, whatever class they are in.
-const G = { mode: "teacher", school: "A", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null, scItem: null };
+const G = { role: "admin", mode: "teacher", school: "A", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null, scItem: null };
 const isYG = () => G.mode === "yeargroup";
 const noun = () => isYG() ? "year group" : "class";
 const yearRounds = (y) => ROUNDS.filter((r) => r.year === y);
@@ -892,7 +990,8 @@ function gainStats(rows) {
 
 function renderPickers() {
   const y = G.year;
-  $("#t-school").innerHTML = Object.entries(SCHOOLS).map(([code, s]) => `<option value="${code}" ${code === G.school ? "selected" : ""}>${s.name}</option>`).join("");
+  $("#t-school").innerHTML = schoolOptions();
+  $("#t-school").disabled = !isAdmin();
   if (isYG()) {
     const levels = [...new Set(STUDENTS.filter((st) => st.school === G.school && inYear(st, y)).map((st) => ylNum(st, y)))].filter((n) => n >= 0).sort((a, b) => a - b);
     if (!levels.includes(G.yl)) G.yl = levels[0];
@@ -915,8 +1014,7 @@ function renderGroup() {
   const gs = gainStats(rows);
   const rooms = [...new Set(sts.map((st) => roomOf(st, y)))];
 
-  $("#nav-teacher").setAttribute("aria-current", isYG() ? "false" : "page");
-  $("#nav-yg").setAttribute("aria-current", isYG() ? "page" : "false");
+  $("#t-tabs").innerHTML = tabsHTML(G.mode);
   $("#t-eyebrow").textContent = `Foundational Skills Assessment · ${isYG() ? "Year group" : "Teacher"} report`;
   const sch = SCHOOLS[G.school];
   $("#t-title").textContent = isYG() ? `${ylName(G.yl)} · ${y}` : `${roomLabel(G.room, G.school)}`;
@@ -1103,26 +1201,15 @@ $("#t-byClass").addEventListener("click", (e) => {
   const a = e.target.closest("a[data-room]"); if (a) G.room = a.dataset.room;
 });
 
-/* ================= SCHOOL VIEW ================= */
-// An item is flagged when the school's reach rate is behind the average across all schools by more than
-// chance would explain, given how many students were working on it (a one-sided binomial test).
-// "Below": less than a 1 in 10 chance. "Well below": less than a 1 in 50 chance. Never flagged under SIG.MIN students.
-const SIG = { MIN: 3, BELOW: 0.10, WELL: 0.02 };
-function binomLE(k, n, p) {
-  let s = 0, c = 1;
-  for (let i = 0; i <= k; i++) {
-    if (i > 0) c = c * (n - i + 1) / i;
-    s += c * Math.pow(p, i) * Math.pow(1 - p, n - i);
-  }
-  return s;
-}
-const SIG_NAME = { ok: "Similar or better", below: "Below", well: "Well below", few: "Too few students" };
+/* ================= ITEM REACH RATES (shared by school and program views) ================= */
+// A student is "working on" an item if it was one of their teaching targets at their first assessment of the year.
+// It counts as reached if they scored 100% on it at their last assessment that year.
 const memo = {};
 function itemRates(code, y) {
   const key = code + y;
   if (memo[key]) return memo[key];
   const out = Array.from({ length: TOTAL_ITEMS }, () => ({ working: 0, reached: 0 }));
-  (code === "ALL" ? ALL_STUDENTS : STUDENTS.filter((st) => st.school === code)).forEach((st) => {
+  (code === "ALL" ? STUDENTS : STUDENTS.filter((st) => st.school === code)).forEach((st) => {
     const as = st.assessments.filter((a) => a.year === y);
     if (as.length < 2) return;
     const first = as[0], last = as[as.length - 1];
@@ -1134,110 +1221,23 @@ function itemRates(code, y) {
   return (memo[key] = out);
 }
 const rate = (c) => c.working ? c.reached / c.working * 100 : null;
-function signal(code, y, n) {
-  const c = itemRates(code, y)[n - 1], b = itemRates("ALL", y)[n - 1];
-  if (c.working < SIG.MIN || !b.working) return { s: "few", c, b };
-  const diff = rate(c) - rate(b);
-  const chance = binomLE(c.reached, c.working, Math.min(0.999, b.reached / b.working));
-  return { s: diff < 0 && chance < SIG.WELL ? "well" : diff < 0 && chance < SIG.BELOW ? "below" : "ok", c, b, diff };
-}
+const MIN_WORKING = 3;
 function progressOf(students, y) {
   const rows = students.filter((st) => inYear(st, y)).map((st) => ({ st, ...studentYear(st, y) }));
   return { rows, ...gainStats(rows) };
 }
 const schoolStudents = (code) => STUDENTS.filter((st) => st.school === code);
-const flaggedCount = (code, y) => Array.from({ length: TOTAL_ITEMS }, (_, i) => signal(code, y, i + 1).s).filter((s) => s === "below" || s === "well").length;
 const pctOf = (a, b) => b ? Math.round(a / b * 100) + "%" : "—";
+const statTiles = (tiles) => tiles.map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
+const yearButtons = (sel) => YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === sel}">${yy}</button>`).join("");
 
-function renderSchool() {
-  const y = G.year, code = G.school, sch = SCHOOLS[code];
-  const sts = schoolStudents(code);
-  const p = progressOf(sts, y), all = progressOf(ALL_STUDENTS, y);
-
-  $("#sc-school").innerHTML = Object.entries(SCHOOLS).map(([c, s]) => `<option value="${c}" ${c === code ? "selected" : ""}>${s.name}</option>`).join("");
-  $("#sc-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
-  $("#sc-title").textContent = sch.name;
-  $("#sc-legendSchool").textContent = sch.name;
-  $("#sc-meta").innerHTML = [`${p.rows.length} students assessed in ${y}`, `${Object.keys(sch.rooms).length} classes in this demo`, "Pre-primary to Year 6"].map((t) => `<span>${t}</span>`).join("");
-
-  const flagged = flaggedCount(code, y);
-  $("#sc-stats").innerHTML = [
-    [p.changes.length ? signed(p.avgGain, r1) : "—", `Average levels gained per student in ${y} (all schools ${signed(all.avgGain, r1)})`],
-    [p.changes.length ? pctOf(p.moved, p.changes.length) : "—", `Students who moved up at least one level (all schools ${pctOf(all.moved, all.changes.length)})`],
-    [p.avgLevel != null ? r1(p.avgLevel) : "—", "Average current level"],
-    [flagged, `Items flagged in ${y}`],
-  ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
-
-  // Year by year
-  const yearsData = YEARS.map((yy) => ({ y: yy, p: progressOf(sts, yy), all: progressOf(ALL_STUDENTS, yy), flagged: flaggedCount(code, yy) }));
-  drawYearBars();
-  $("#sc-yearTable").innerHTML = `<tr><th>Year</th><th>Students</th><th>Average levels gained</th><th>All schools</th><th>Moved up</th><th>All schools</th><th>Items flagged</th></tr>` +
-    yearsData.map((d) => `<tr><td>${d.y}</td><td>${d.p.rows.length}</td><td>${signed(d.p.avgGain, r1)}</td><td>${signed(d.all.avgGain, r1)}</td><td>${pctOf(d.p.moved, d.p.changes.length)}</td><td>${pctOf(d.all.moved, d.all.changes.length)}</td><td>${d.flagged}</td></tr>`).join("");
-
-  // Signal grid: one row per year, one square per item
-  if (G.scItem == null) {
-    let worst = null;
-    for (let n = 1; n <= TOTAL_ITEMS; n++) { const s = signal(code, y, n); if (s.diff != null && (worst == null || s.diff < worst.diff)) worst = { n, diff: s.diff }; }
-    G.scItem = worst ? worst.n : 1;
-  }
-  let g = `<thead><tr><th></th>${Array.from({ length: TOTAL_ITEMS }, (_, i) => `<th>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</th>`).join("")}</tr></thead><tbody>`;
-  YEARS.forEach((yy) => {
-    g += `<tr><th>${yy}</th>`;
-    for (let n = 1; n <= TOTAL_ITEMS; n++) {
-      const s = signal(code, yy, n);
-      const t = s.s === "few"
-        ? `Item ${n}, ${yy}: ${s.c.working} student${s.c.working === 1 ? "" : "s"} working on it, too few to compare`
-        : `Item ${n}, ${yy}: ${s.c.reached} of ${s.c.working} students reached 100% (${Math.round(rate(s.c))}%). All schools ${Math.round(rate(s.b))}%. ${SIG_NAME[s.s]}.`;
-      g += `<td><div class="sig ${s.s}${n === G.scItem ? " sel" : ""}" data-n="${n}" data-tip="${t}" ${s.s === "few" ? "" : 'tabindex="0" role="button"'}>${s.s === "well" ? "!!" : s.s === "below" ? "!" : ""}</div></td>`;
-    }
-    g += "</tr>";
-  });
-  $("#sc-grid").innerHTML = g + "</tbody>";
-
-  // Watch list for the selected year
-  const watch = [];
-  for (let n = 1; n <= TOTAL_ITEMS; n++) {
-    const s = signal(code, y, n);
-    if (s.s !== "below" && s.s !== "well") continue;
-    const other = YEARS.filter((yy) => yy !== y && ["below", "well"].includes(signal(code, yy, n).s));
-    watch.push({ n, s, other });
-  }
-  watch.sort((a, b) => a.s.diff - b.s.diff);
-  $("#sc-watchTitle").textContent = `Items to look at in ${y}`;
-  $("#sc-watchSub").textContent = `Items where ${sch.name}'s students reached 100% less often than students across all schools. Worst first.`;
-  $("#sc-watch").innerHTML = watch.length ? watch.map((w) =>
-    `<li><span class="tag ${w.s.s === "well" ? "crit" : "warn"}">${SIG_NAME[w.s.s]}</span><span><a href="#school" data-item="${w.n}"><b>Item ${w.n}</b></a>: ${w.s.c.reached} of ${w.s.c.working} students working on it reached 100% (${Math.round(rate(w.s.c))}%). Across all schools: ${Math.round(rate(w.s.b))}%.${w.other.length ? ` Also flagged in ${w.other.join(" and ")}.` : ""}</span></li>`).join("")
-    : `<li><span class="tag info">None</span><span>No items flagged for ${sch.name} in ${y}.</span></li>`;
-
-  // Item detail
-  $("#sc-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === G.scItem ? "selected" : ""}>Item ${i + 1}</option>`).join("");
-  renderItemDetail();
-
-  // Classes and year levels
-  $("#sc-partsSub").textContent = `How each class and year level at ${sch.name} progressed in ${y}. Select one to open its report.`;
-  const roomsHere = Object.keys(sch.rooms).filter((rm) => p.rows.some((r) => roomOf(r.st, y) === rm));
-  $("#sc-classes").innerHTML = `<thead><tr><th>Class</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
-    roomsHere.map((rm) => {
-      const s = gainStats(p.rows.filter((r) => roomOf(r.st, y) === rm));
-      return `<tr><td><a href="#teacher" data-room="${rm}">${roomLabel(rm, code)}</a></td><td class="num">${p.rows.filter((r) => roomOf(r.st, y) === rm).length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
-    }).join("") + "</tbody>";
-  const levels = [...new Set(p.rows.map((r) => ylNum(r.st, y)))].sort((a, b) => a - b);
-  $("#sc-levels").innerHTML = `<thead><tr><th>Year level</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
-    levels.map((n) => {
-      const rr = p.rows.filter((r) => ylNum(r.st, y) === n);
-      const s = gainStats(rr);
-      return `<tr><td><a href="#yeargroup" data-yl="${n}">${ylName(n)}</a></td><td class="num">${rr.length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
-    }).join("") + "</tbody>";
-}
-
-function drawYearBars() {
-  const el = $("#sc-yearChart");
-  const code = G.school;
-  const data = YEARS.map((yy) => ({ y: yy, v: progressOf(schoolStudents(code), yy).avgGain, b: progressOf(ALL_STUDENTS, yy).avgGain }));
-  const W = Math.max(300, el.clientWidth), H = 210;
+// Bar chart of levels gained per year. Optional dots show each school, for the program view.
+function drawGainBars(el, data, nameOf) {
+  const W = Math.max(300, el.clientWidth), H = 220;
   const m = { t: 26, r: 16, b: 30, l: 40 };
-  const yMax = Math.max(1, Math.ceil(Math.max(...data.map((d) => Math.max(d.v || 0, d.b || 0))) + 0.4));
-  const y = (v) => H - m.b - v / yMax * (H - m.t - m.b);
+  const all = data.flatMap((d) => [d.v, ...(d.dots || []).map((x) => x.v)]).filter((v) => v != null);
+  const yMax = Math.max(1, Math.ceil(Math.max(...all) + 0.3));
+  const y = (v) => H - m.b - Math.max(0, v) / yMax * (H - m.t - m.b);
   const slot = (W - m.l - m.r) / data.length, bw = Math.min(72, slot * 0.45);
   let s = "";
   for (let v = 0; v <= yMax; v++) {
@@ -1246,29 +1246,102 @@ function drawYearBars() {
   }
   data.forEach((d, i) => {
     const cx = m.l + slot * (i + 0.5);
-    s += `<rect x="${cx - bw / 2}" y="${y(d.v)}" width="${bw}" height="${y(0) - y(d.v)}" rx="4" fill="var(--accent)"/>`;
-    s += `<text x="${cx}" y="${Math.min(y(d.v), y(d.b)) - 8}" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${signed(d.v, r1)}</text>`;
-    s += `<line x1="${cx - bw / 2 - 8}" x2="${cx + bw / 2 + 8}" y1="${y(d.b)}" y2="${y(d.b)}" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>`;
+    s += `<rect x="${cx - bw / 2}" y="${y(d.v)}" width="${bw}" height="${y(0) - y(d.v)}" rx="4" fill="var(--accent)" fill-opacity="${d.dots ? 0.35 : 1}"/>`;
+    s += `<text x="${cx}" y="${y(d.v) - 8}" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${signed(d.v, r1)}</text>`;
+    (d.dots || []).forEach((dot, j) => {
+      const dx = cx + bw / 2 + 14 + (j % 3) * 7;
+      s += `<circle cx="${dx}" cy="${y(dot.v)}" r="4" fill="var(--ink)" fill-opacity="0.75" stroke="var(--surface)" stroke-width="1.5" data-tip="${d.y}: ${dot.name} ${signed(dot.v, r1)} levels per student"/>`;
+    });
     s += `<text class="axis-text" x="${cx}" y="${H - 8}" text-anchor="middle">${d.y}</text>`;
-    s += `<rect class="bar-hit" x="${cx - slot / 2}" y="${m.t}" width="${slot}" height="${H - m.t - m.b}" data-tip="${d.y}: ${SCHOOLS[code].name} ${signed(d.v, r1)} levels per student. All schools ${signed(d.b, r1)}."/>`;
+    s += `<rect class="bar-hit" x="${cx - bw / 2}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" data-tip="${d.y}: ${nameOf} ${signed(d.v, r1)} levels per student"/>`;
   });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg>`;
 }
 
-function renderItemDetail() {
+/* ================= SCHOOL VIEW (own data only) ================= */
+function renderSchool() {
+  const y = G.year, code = G.school, sch = SCHOOLS[code];
+  const sts = schoolStudents(code);
+  const p = progressOf(sts, y);
+
+  $("#sc-tabs").innerHTML = tabsHTML("school");
+  $("#sc-school").innerHTML = schoolOptions();
+  $("#sc-school").disabled = !isAdmin();
+  $("#sc-years").innerHTML = yearButtons(y);
+  $("#sc-title").textContent = sch.name;
+  $("#sc-meta").innerHTML = [`${p.rows.length} students assessed in ${y}`, `${Object.keys(sch.rooms).length} classes in this demo`, "Pre-primary to Year 6"].map((t) => `<span>${t}</span>`).join("");
+  $("#sc-stats").innerHTML = statTiles([
+    [p.changes.length ? signed(p.avgGain, r1) : "—", `Average levels gained per student in ${y}`],
+    [p.changes.length ? pctOf(p.moved, p.changes.length) : "—", `Students who moved up at least one level in ${y}`],
+    [p.avgLevel != null ? r1(p.avgLevel) : "—", "Average current level"],
+    [p.rows.length, `Students assessed in ${y}`],
+  ]);
+
+  drawSchoolBars();
+  $("#sc-yearTable").innerHTML = `<tr><th>Year</th><th>Students</th><th>Average levels gained</th><th>Moved up</th><th>Average level at end of year</th></tr>` +
+    YEARS.map((yy) => { const d = progressOf(sts, yy); return `<tr><td>${yy}</td><td>${d.rows.length}</td><td>${signed(d.avgGain, r1)}</td><td>${pctOf(d.moved, d.changes.length)}</td><td>${r1(d.avgLevel)}</td></tr>`; }).join("");
+
+  // Reach-rate grid: one row per year, one square per item, darker = more students reached it.
+  if (G.scItem == null) G.scItem = hardestItems(code, y)[0]?.n || 1;
+  let g = `<thead><tr><th></th>${Array.from({ length: TOTAL_ITEMS }, (_, i) => `<th>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</th>`).join("")}</tr></thead><tbody>`;
+  YEARS.forEach((yy) => {
+    g += `<tr><th>${yy}</th>`;
+    itemRates(code, yy).forEach((c, i) => {
+      const n = i + 1;
+      if (c.working < MIN_WORKING) {
+        g += `<td><div class="sig few" data-tip="Item ${n}, ${yy}: ${c.working} student${c.working === 1 ? "" : "s"} working on it, too few to show a rate"></div></td>`;
+        return;
+      }
+      const r = rate(c);
+      g += `<td><div class="sig${n === G.scItem ? " sel" : ""}" data-n="${n}" tabindex="0" role="button" style="background:color-mix(in oklab, var(--accent) ${10 + r * 0.9}%, var(--surface))" data-tip="Item ${n}, ${yy}: ${c.reached} of ${c.working} students reached 100% (${Math.round(r)}%)"></div></td>`;
+    });
+    g += "</tr>";
+  });
+  $("#sc-grid").innerHTML = g + "</tbody>";
+
+  const hardest = hardestItems(code, y).slice(0, 5);
+  $("#sc-watchTitle").textContent = `Hardest items in ${y}`;
+  $("#sc-watch").innerHTML = hardest.length ? hardest.map((h) => {
+    const other = YEARS.filter((yy) => yy !== y && hardestItems(code, yy).slice(0, 5).some((x) => x.n === h.n));
+    return `<li><span class="tag warn">${Math.round(rate(h.c))}%</span><span><a href="#school" data-item="${h.n}"><b>Item ${h.n}</b></a>: ${h.c.reached} of ${h.c.working} students working on it reached 100%.${other.length ? ` Also one of the hardest in ${other.join(" and ")}.` : ""}</span></li>`;
+  }).join("") : `<li><span class="tag info">None</span><span>Not enough students working on any item in ${y}.</span></li>`;
+
+  $("#sc-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === G.scItem ? "selected" : ""}>Item ${i + 1}</option>`).join("");
+  renderSchoolItem();
+
+  $("#sc-partsSub").textContent = `How each class and year level at ${sch.name} progressed in ${y}. Select one to open its report.`;
+  const roomsHere = Object.keys(sch.rooms).filter((rm) => p.rows.some((r) => roomOf(r.st, y) === rm));
+  $("#sc-classes").innerHTML = `<thead><tr><th>Class</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
+    roomsHere.map((rm) => {
+      const rr = p.rows.filter((r) => roomOf(r.st, y) === rm), s = gainStats(rr);
+      return `<tr><td><a href="#teacher" data-room="${rm}">${roomLabel(rm, code)}</a></td><td class="num">${rr.length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
+    }).join("") + "</tbody>";
+  const levels = [...new Set(p.rows.map((r) => ylNum(r.st, y)))].sort((a, b) => a - b);
+  $("#sc-levels").innerHTML = `<thead><tr><th>Year level</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
+    levels.map((n) => {
+      const rr = p.rows.filter((r) => ylNum(r.st, y) === n), s = gainStats(rr);
+      return `<tr><td><a href="#yeargroup" data-yl="${n}">${ylName(n)}</a></td><td class="num">${rr.length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
+    }).join("") + "</tbody>";
+  $("#sc-ownNote").textContent = `This page only uses ${sch.name}'s own data. Comparisons with other schools are only on the program report, which program administrators can see.`;
+}
+function hardestItems(code, y) {
+  return itemRates(code, y).map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= MIN_WORKING).sort((a, b) => rate(a.c) - rate(b.c) || b.c.working - a.c.working);
+}
+function drawSchoolBars() {
+  const sts = schoolStudents(G.school);
+  drawGainBars($("#sc-yearChart"), YEARS.map((yy) => ({ y: yy, v: progressOf(sts, yy).avgGain })), SCHOOLS[G.school].name);
+}
+function renderSchoolItem() {
   const code = G.school, n = G.scItem;
-  const row = (cls, label, c) => {
-    const r = rate(c);
-    return `<div class="cmp-row ${cls}"><span class="who-lbl">${label}</span><div class="track"><div class="fill" style="width:${r == null ? 0 : r}%"></div></div><span class="val">${r == null ? "No students" : `${Math.round(r)}% (${c.reached} of ${c.working})`}</span></div>`;
-  };
-  $("#sc-itemBars").innerHTML = YEARS.map((yy) => {
-    const s = signal(code, yy, n);
-    const note = s.s === "few" ? `<span class="sub">Fewer than 3 students at ${SCHOOLS[code].name} were working on item ${n} in ${yy}, so it isn't compared.</span>` : "";
-    const tag = s.s === "below" || s.s === "well" ? ` <span class="status" style="${s.s === "well" ? "background:var(--crit);color:var(--on-crit)" : "background:var(--warn-soft);color:var(--warn)"}">${SIG_NAME[s.s]}</span>` : "";
-    return `<div class="cmp-year"><b>${yy}</b><div class="cmp-rows">${row("school", SCHOOLS[code].name + tag, s.c)}${row("bench", "All schools", s.b)}${note}</div></div>`;
-  }).join("");
-  $("#sc-grid").querySelectorAll(".sig").forEach((c) => c.classList.toggle("sel", +c.dataset.n === n));
   $("#sc-itemTitle").textContent = `Item ${n} year by year`;
+  $("#sc-itemBars").innerHTML = YEARS.map((yy) => {
+    const c = itemRates(code, yy)[n - 1], r = rate(c);
+    const body = c.working < MIN_WORKING
+      ? `<span class="sub">${c.working} student${c.working === 1 ? "" : "s"} working on item ${n} in ${yy}. Too few to show a rate.</span>`
+      : `<div class="cmp-row school"><span class="who-lbl">Reached 100%</span><div class="track"><div class="fill" style="width:${r}%"></div></div><span class="val">${Math.round(r)}% (${c.reached} of ${c.working})</span></div>`;
+    return `<div class="cmp-year"><b>${yy}</b><div class="cmp-rows">${body}</div></div>`;
+  }).join("");
+  $("#sc-grid").querySelectorAll(".sig[data-n]").forEach((c) => c.classList.toggle("sel", +c.dataset.n === n));
 }
 
 $("#sc-school").addEventListener("change", (e) => { G.school = e.target.value; G.scItem = null; renderSchool(); });
@@ -1276,22 +1349,198 @@ $("#sc-years").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   G.year = +b.dataset.y; G.scItem = null; renderSchool();
 });
-$("#sc-itemSel").addEventListener("change", (e) => { G.scItem = +e.target.value; renderItemDetail(); });
-function pickSig(e) {
-  const c = e.target.closest(".sig:not(.few)"); if (!c) return;
-  G.scItem = +c.dataset.n; $("#sc-itemSel").value = G.scItem; renderItemDetail();
+$("#sc-itemSel").addEventListener("change", (e) => { G.scItem = +e.target.value; renderSchoolItem(); });
+function pickSchoolSquare(e) {
+  const c = e.target.closest(".sig[data-n]"); if (!c) return;
+  G.scItem = +c.dataset.n; $("#sc-itemSel").value = G.scItem; renderSchoolItem();
 }
-$("#sc-grid").addEventListener("click", pickSig);
-$("#sc-grid").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickSig(e); } });
+$("#sc-grid").addEventListener("click", pickSchoolSquare);
+$("#sc-grid").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickSchoolSquare(e); } });
 $("#sc-watch").addEventListener("click", (e) => {
   const a = e.target.closest("a[data-item]"); if (!a) return;
   e.preventDefault();
-  G.scItem = +a.dataset.item; $("#sc-itemSel").value = G.scItem; renderItemDetail();
+  G.scItem = +a.dataset.item; $("#sc-itemSel").value = G.scItem; renderSchoolItem();
   $("#sc-itemTitle").scrollIntoView({ behavior: "smooth", block: "start" });
 });
-$("#schoolView").addEventListener("click", (e) => {
-  const r = e.target.closest("a[data-room]"); if (r) G.room = r.dataset.room;
-  const l = e.target.closest("a[data-yl]"); if (l) G.yl = +l.dataset.yl;
+
+/* ================= PROGRAM VIEW (administrators only) ================= */
+// An item is flagged for a school when its reach rate is behind the program by more than chance would explain,
+// given how many students were working on it (a one-sided binomial test).
+// "Below": less than a 1 in 10 chance. "Well below": less than a 1 in 50 chance. Never flagged under MIN_WORKING students.
+const SIG = { BELOW: 0.10, WELL: 0.02 };
+const SIG_NAME = { ok: "Similar or better", below: "Below", well: "Well below", few: "Too few students" };
+function binomLE(k, n, p) {
+  let s = 0, c = 1;
+  for (let i = 0; i <= k; i++) {
+    if (i > 0) c = c * (n - i + 1) / i;
+    s += c * Math.pow(p, i) * Math.pow(1 - p, n - i);
+  }
+  return s;
+}
+function signal(code, y, n) {
+  const c = itemRates(code, y)[n - 1], b = itemRates("ALL", y)[n - 1];
+  if (c.working < MIN_WORKING || !b.working) return { s: "few", c, b };
+  const diff = rate(c) - rate(b);
+  const chance = binomLE(c.reached, c.working, Math.min(0.999, b.reached / b.working));
+  return { s: diff < 0 && chance < SIG.WELL ? "well" : diff < 0 && chance < SIG.BELOW ? "below" : "ok", c, b, diff };
+}
+const flaggedItems = (code, y) => Array.from({ length: TOTAL_ITEMS }, (_, i) => i + 1).filter((n) => ["below", "well"].includes(signal(code, y, n).s));
+// A school is marked "Check in" when it has 2 or more flagged items, or its students gained 0.3 levels or more below the program.
+function checkIn(code, y) {
+  const p = progressOf(schoolStudents(code), y), all = progressOf(STUDENTS, y);
+  const flags = flaggedItems(code, y);
+  const why = [];
+  if (p.changes.length >= 8 && p.avgGain <= all.avgGain - 0.3) why.push(`levels gained ${signed(p.avgGain, r1)} against ${signed(all.avgGain, r1)}`);
+  if (flags.length >= 2) why.push(`${flags.length} items flagged`);
+  return { p, flags, why };
+}
+const PG = { item: null, school: null };
+
+function renderProgram() {
+  const y = G.year, codes = Object.keys(SCHOOLS);
+  const all = progressOf(STUDENTS, y);
+  const checks = codes.map((c) => ({ code: c, ...checkIn(c, y) }));
+  const needing = checks.filter((c) => c.why.length);
+
+  $("#pg-tabs").innerHTML = tabsHTML("program");
+  $("#pg-years").innerHTML = yearButtons(y);
+  $("#pg-meta").innerHTML = [`${codes.length} schools`, `${all.rows.length} students assessed in ${y}`, "Standard and AAC assessments combined"].map((t) => `<span>${t}</span>`).join("");
+  $("#pg-stats").innerHTML = statTiles([
+    [signed(all.avgGain, r1), `Average levels gained per student in ${y}`],
+    [pctOf(all.moved, all.changes.length), `Students who moved up at least one level in ${y}`],
+    [`${needing.length} of ${codes.length}`, `Schools marked “Check in” for ${y}`],
+    [all.rows.length, `Students assessed in ${y}`],
+  ]);
+
+  drawProgramBars();
+  $("#pg-yearTable").innerHTML = `<tr><th>Year</th><th>Students</th><th>Average levels gained</th><th>Moved up</th><th>Schools to check in with</th></tr>` +
+    YEARS.map((yy) => { const d = progressOf(STUDENTS, yy); return `<tr><td>${yy}</td><td>${d.rows.length}</td><td>${signed(d.avgGain, r1)}</td><td>${pctOf(d.moved, d.changes.length)}</td><td>${codes.filter((c) => checkIn(c, yy).why.length).length}</td></tr>`; }).join("");
+
+  // Schools table, schools to check in with first.
+  $("#pg-schoolsTitle").textContent = `Schools in ${y}`;
+  $("#pg-schools").innerHTML = `<thead><tr><th>School</th><th>Students</th><th>Levels gained</th><th>Moved up</th><th>Items flagged</th><th></th></tr></thead><tbody>` +
+    checks.sort((a, b) => b.why.length - a.why.length || a.p.avgGain - b.p.avgGain).map((c) =>
+      `<tr><td><a href="#school" data-school="${c.code}">${SCHOOLS[c.code].name}</a></td><td class="num">${c.p.rows.length}</td><td class="num">${signed(c.p.avgGain, r1)}</td><td class="num">${pctOf(c.p.moved, c.p.changes.length)}</td><td class="num">${c.flags.length ? c.flags.map((n) => "Item " + n).join(", ") : "—"}</td><td>${c.why.length ? `<span class="status" data-tip="${c.why.join("; ")}">Check in</span>` : ""}</td></tr>`).join("") + "</tbody>";
+
+  // Item signals by school
+  if (PG.school == null || PG.item == null) {
+    const first = checks.find((c) => c.flags.length);
+    PG.school = first ? first.code : codes[0];
+    PG.item = first ? first.flags[0] : 1;
+  }
+  let g = `<thead><tr><th></th>${Array.from({ length: TOTAL_ITEMS }, (_, i) => `<th>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</th>`).join("")}</tr></thead><tbody>`;
+  codes.forEach((c) => {
+    g += `<tr><th>${SCHOOLS[c].name}</th>`;
+    for (let n = 1; n <= TOTAL_ITEMS; n++) {
+      const s = signal(c, y, n);
+      const t = s.s === "few"
+        ? `${SCHOOLS[c].name}, item ${n}: ${s.c.working} student${s.c.working === 1 ? "" : "s"} working on it, too few to compare`
+        : `${SCHOOLS[c].name}, item ${n}: ${s.c.reached} of ${s.c.working} reached 100% (${Math.round(rate(s.c))}%). Program ${Math.round(rate(s.b))}%. ${SIG_NAME[s.s]}.`;
+      const sel = c === PG.school && n === PG.item ? " sel" : "";
+      g += `<td><div class="sig ${s.s}${sel}" data-school="${c}" data-n="${n}" data-tip="${t}" ${s.s === "few" ? "" : 'tabindex="0" role="button"'}>${s.s === "well" ? "!!" : s.s === "below" ? "!" : ""}</div></td>`;
+    }
+    g += "</tr>";
+  });
+  $("#pg-grid").innerHTML = g + "</tbody>";
+  $("#pg-sigSub").textContent = `For each school and item in ${y}: of the students working on the item at the start of the year, how many had it at 100% by the end, compared with the whole program. Select a square to see it year by year.`;
+  renderSignalDetail();
+
+  // Items that are hard everywhere
+  drawProgramItems();
+  const prog = itemRates("ALL", y).map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= 10).sort((a, b) => rate(a.c) - rate(b.c)).slice(0, 4);
+  $("#pg-hard").innerHTML = prog.map((x) => {
+    const others = YEARS.filter((yy) => yy !== y).map((yy) => { const c = itemRates("ALL", yy)[x.n - 1]; return c.working ? `${yy}: ${Math.round(rate(c))}%` : null; }).filter(Boolean);
+    const low = codes.filter((c) => { const s = itemRates(c, y)[x.n - 1]; return s.working >= MIN_WORKING && rate(s) < 35; }).length;
+    const withData = codes.filter((c) => itemRates(c, y)[x.n - 1].working >= MIN_WORKING).length;
+    return `<li><span class="tag warn">${Math.round(rate(x.c))}%</span><span><b>Item ${x.n}</b>: ${x.c.reached} of ${x.c.working} students working on it reached 100% across the program.${others.length ? ` ${others.join(", ")}.` : ""} Under 35% in ${low} of the ${withData} schools with enough students.</span></li>`;
+  }).join("");
+}
+
+function drawProgramBars() {
+  const codes = Object.keys(SCHOOLS);
+  drawGainBars($("#pg-yearChart"), YEARS.map((yy) => ({
+    y: yy, v: progressOf(STUDENTS, yy).avgGain,
+    dots: codes.map((c) => ({ name: SCHOOLS[c].name, v: progressOf(schoolStudents(c), yy).avgGain })).filter((d) => d.v != null),
+  })), "Whole program");
+}
+
+function drawProgramItems() {
+  const el = $("#pg-items");
+  const rates = itemRates("ALL", G.year);
+  const W = Math.max(300, el.clientWidth), H = 190;
+  const m = { t: 14, r: 8, b: 28, l: 46 };
+  const y = (v) => H - m.b - v / 100 * (H - m.t - m.b);
+  const bw = (W - m.l - m.r) / TOTAL_ITEMS;
+  const valid = rates.map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= 10);
+  const lowest = valid.slice().sort((a, b) => rate(a.c) - rate(b.c)).slice(0, 4).map((x) => x.n);
+  let s = "";
+  [0, 50, 100].forEach((v) => {
+    s += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    s += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`;
+  });
+  [1, 6, 12, 18, 24, 30, 36].forEach((n) => { s += `<text class="axis-text num" x="${m.l + (n - 0.5) * bw}" y="${H - 8}" text-anchor="middle">${n}</text>`; });
+  rates.forEach((c, i) => {
+    const n = i + 1, x = m.l + i * bw + 1, w = Math.max(2, bw - 2);
+    const ok = c.working >= 10;
+    if (ok) s += `<rect x="${x}" y="${y(rate(c))}" width="${w}" height="${y(0) - y(rate(c))}" rx="2" fill="${lowest.includes(n) ? "var(--warn)" : "var(--accent)"}"/>`;
+    const t = ok ? `Item ${n}: ${c.reached} of ${c.working} students reached 100% (${Math.round(rate(c))}%)` : `Item ${n}: fewer than 10 students working on it across the program`;
+    s += `<rect class="bar-hit" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" data-tip="${t}"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg>`;
+}
+
+function renderSignalDetail() {
+  const c = PG.school, n = PG.item;
+  $("#pg-detailTitle").textContent = `${SCHOOLS[c].name}, item ${n}`;
+  const row = (cls, label, x) => {
+    const r = rate(x);
+    return `<div class="cmp-row ${cls}"><span class="who-lbl">${label}</span><div class="track"><div class="fill" style="width:${r == null ? 0 : r}%"></div></div><span class="val">${r == null ? "No students" : `${Math.round(r)}% (${x.reached} of ${x.working})`}</span></div>`;
+  };
+  $("#pg-detail").innerHTML = YEARS.map((yy) => {
+    const s = signal(c, yy, n);
+    const tag = ["below", "well"].includes(s.s) ? ` <span class="status ${s.s === "well" ? "crit" : "warn"}">${SIG_NAME[s.s]}</span>` : "";
+    const note = s.s === "few" ? `<span class="sub">Fewer than ${MIN_WORKING} students were working on it, so it isn't compared.</span>` : "";
+    return `<div class="cmp-year"><b>${yy}</b><div class="cmp-rows">${row("school", SCHOOLS[c].name + tag, s.c)}${row("bench", "Whole program", s.b)}${note}</div></div>`;
+  }).join("");
+  $("#pg-grid").querySelectorAll(".sig").forEach((el) => el.classList.toggle("sel", el.dataset.school === c && +el.dataset.n === n));
+}
+
+$("#pg-years").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  G.year = +b.dataset.y; PG.item = null; renderProgram();
+});
+function pickProgramSquare(e) {
+  const el = e.target.closest(".sig:not(.few)"); if (!el) return;
+  PG.school = el.dataset.school; PG.item = +el.dataset.n; renderSignalDetail();
+}
+$("#pg-grid").addEventListener("click", pickProgramSquare);
+$("#pg-grid").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickProgramSquare(e); } });
+$("#pg-schools").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-school]"); if (a) { G.school = a.dataset.school; G.scItem = null; }
+});
+document.addEventListener("click", (e) => {
+  const r = e.target.closest("#schoolView a[data-room]"); if (r) G.room = r.dataset.room;
+  const l = e.target.closest("#schoolView a[data-yl]"); if (l) G.yl = +l.dataset.yl;
+});
+
+/* ================= WHO IS VIEWING (wireframe only) ================= */
+// School staff see their own school only. Program administrators see every school and the program report.
+const isAdmin = () => G.role === "admin";
+const canSee = (code) => isAdmin() || G.role === code;
+function schoolOptions() {
+  return Object.entries(SCHOOLS).filter(([c]) => canSee(c)).map(([c, s]) => `<option value="${c}" ${c === G.school ? "selected" : ""}>${s.name}</option>`).join("");
+}
+function tabsHTML(current) {
+  const tabs = [["teacher", "Teacher"], ["yeargroup", "Year group"], ["school", "School"]];
+  if (isAdmin()) tabs.push(["program", "Program"]);
+  return tabs.map(([h, label]) => `<a href="#${h}" ${h === current ? 'aria-current="page"' : ""}>${label}</a>`).join("");
+}
+$("#role").innerHTML = `<option value="admin">Program administrator</option>` +
+  ["A", "B", "C"].map((c) => `<option value="${c}">Staff at ${SCHOOLS[c].name}</option>`).join("");
+$("#role").addEventListener("change", (e) => {
+  G.role = e.target.value;
+  if (!isAdmin()) { G.school = G.role; G.item = null; G.scItem = null; }
+  if (location.hash === "#program" && !isAdmin()) location.hash = "#school"; else route();
 });
 
 /* ================= STUDENT VIEW ================= */
@@ -1304,7 +1553,7 @@ function renderStudent(st) {
   $("#s-name").textContent = st.name;
   $("#s-typeBadge").textContent = typeName(st.type);
   $("#s-back").href = "#" + G.mode;
-  $("#s-back").textContent = "← " + (G.mode === "school" ? SCHOOLS[G.school].name : isYG() ? ylName(G.yl) : roomLabel(G.room, G.school)) + ` (${G.year})`;
+  $("#s-back").textContent = "← " + (G.mode === "program" ? "Whole program" : G.mode === "school" ? SCHOOLS[G.school].name : isYG() ? ylName(G.yl) : roomLabel(G.room, G.school)) + ` (${G.year})`;
   $("#s-meta").innerHTML = [
     ylName(ylNum(st, latest.year)), SCHOOLS[st.school].name,
     `${latest.year === 2026 ? "Current class" : "Last class"}: ${roomLabel(roomOf(st, latest.year), st.school)}`,
@@ -1446,21 +1695,28 @@ $("#s-mTotal").onclick = () => { S.metric = "total"; $("#s-mTotal").setAttribute
 $("#s-mLevel").onclick = () => { S.metric = "level"; $("#s-mLevel").setAttribute("aria-pressed", true); $("#s-mTotal").setAttribute("aria-pressed", false); drawStudentLine(); };
 
 /* ================= ROUTING ================= */
-// #teacher, #yeargroup, #school, or a student id such as #s07.
+// #teacher, #yeargroup, #school, #program, or a student id such as #s07.
+// Staff are sent back to their own school if they open a link to another school's student or to the program report.
 function route() {
   const h = location.hash.slice(1);
   const st = BY_ID[h];
   tip.hidden = true;
+  if (st && !canSee(st.school)) { location.hash = "#teacher"; return; }
+  if (h === "program" && !isAdmin()) { location.hash = "#school"; return; }
   if (!st) {
-    const mode = h === "yeargroup" || h === "school" ? h : "teacher";
+    const mode = ["yeargroup", "school", "program"].includes(h) ? h : "teacher";
     if (mode !== G.mode) G.item = null;
     G.mode = mode;
   }
-  const isSchool = G.mode === "school";
-  $("#teacherView").hidden = !!st || isSchool;
-  $("#schoolView").hidden = !!st || !isSchool;
-  $("#studentView").hidden = !st;
-  if (st) renderStudent(st); else if (isSchool) renderSchool(); else renderGroup();
+  const view = st ? "student" : G.mode === "school" ? "school" : G.mode === "program" ? "program" : "group";
+  $("#teacherView").hidden = view !== "group";
+  $("#schoolView").hidden = view !== "school";
+  $("#programView").hidden = view !== "program";
+  $("#studentView").hidden = view !== "student";
+  if (view === "student") renderStudent(st);
+  else if (view === "school") renderSchool();
+  else if (view === "program") renderProgram();
+  else renderGroup();
   window.scrollTo(0, 0);
 }
 addEventListener("hashchange", route);
@@ -1470,7 +1726,8 @@ addEventListener("resize", () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
     if (!$("#studentView").hidden) drawStudentLine();
-    else if (!$("#schoolView").hidden) drawYearBars();
+    else if (!$("#schoolView").hidden) drawSchoolBars();
+    else if (!$("#programView").hidden) { drawProgramBars(); drawProgramItems(); }
     else { drawGroupProg(); drawItem(); drawChanges(); }
   }, 120);
 });
