@@ -171,12 +171,34 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 720px) { .parts { grid-template-columns: 1fr; } .cmp-row { grid-template-columns: 80px 1fr; } .cmp-row .val { grid-column: 2; } }
 
+/* Footnotes: how the flags on each page are worked out */
+.footnote { border-top: 2px solid var(--line); padding-top: 18px; display: flex; flex-direction: column; gap: 22px; font-size: 14px; }
+.fn-part { display: flex; flex-direction: column; gap: 10px; }
+.fn-part > h3 { font-size: 16px; }
+.rules { display: flex; flex-direction: column; gap: 10px; }
+.rule { border-left: 3px solid var(--line); padding: 2px 0 2px 14px; display: flex; flex-direction: column; gap: 6px; max-width: 78ch; }
+.rule-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.rule-head b { font-family: var(--font-display); font-weight: 600; }
+.rule-head .where { font-size: 12px; color: var(--muted); }
+.rule-head .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--stop-soft); color: var(--stop); }
+.rule-head .tag.info { background: var(--track); color: var(--ink-2); }
+.rule-head .tag.warn { background: var(--warn-soft); color: var(--warn); }
+.rule-head .sig-key { width: 20px !important; height: 20px !important; border-radius: 4px; font-size: 10px; }
+.rule p { color: var(--ink); }
+.rule .lbl { display: inline-block; min-width: 0; margin-right: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.examples td, .examples th { white-space: nowrap; }
+.calc { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.calc input { font: inherit; font-size: 14px; width: 80px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.calc-out { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; max-width: 78ch; }
+
 /* Viewer switch (wireframe only) */
 .viewer { max-width: 980px; margin: 0 auto 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 14px; border: 1px dashed color-mix(in oklab, var(--suggest) 45%, var(--line)); border-radius: 10px; background: var(--suggest-soft); }
 .viewer .field { color: var(--suggest); }
 .chip.admin { color: var(--suggest); border-color: var(--suggest); }
 .status.warn { background: var(--warn-soft); color: var(--warn); }
 .status.crit { background: var(--crit); color: var(--on-crit); }
+.status.info { background: var(--track); color: var(--ink-2); }
 .status.prog { background: var(--suggest-soft); color: var(--suggest); text-transform: none; letter-spacing: 0; font-size: 12px; }
 h2 .status { vertical-align: 3px; }
 .sig.tagged { color: var(--suggest); font-size: 10px; outline: 2px solid var(--suggest); outline-offset: -2px; }
@@ -383,6 +405,40 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
   </section>
 
   <footer class="notes" id="t-notes"></footer>
+  <aside class="footnote" id="fn-group" aria-label="How the flags on this page are worked out">
+    <p class="eyebrow">Footnote · How the flags on this page are worked out</p>
+  <section class="fn-part" id="cr-group" aria-labelledby="cr-groupTitle">
+    <h3 id="cr-groupTitle">Teacher and year group reports</h3>
+    <p class="sub">A year group is every student at that year level on their own student record, whatever class they're in.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-head"><b>Levels gained in a year</b><span class="where">Summary numbers, student list</span></div>
+        <p><span class="lbl">Rule</span>The student's level at their last assessment that year minus their level at their first, counting an entry assessment. A student needs at least 2 assessments in the year to be counted.</p>
+        <p><span class="lbl">Example</span>Level 7 in Term 1 and level 9 in Term 3 is +2. A new student with an entry assessment at level 2 in May and level 3 in Term 3 is +1.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Moved up</b><span class="where">Summary numbers, school and program tables</span></div>
+        <p><span class="lbl">Rule</span>A student who gained at least 1 level in the year.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="status">No level gain</span><b>Students not moving up</b><span class="where">Student list, Students not moving up</span></div>
+        <p><span class="lbl">Rule</span>A student whose level at their last assessment of the year is the same as, or lower than, at their first. Program administrators only see how many, never who.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Class and year group averages</b><span class="where">Progress and item progress graphs</span></div>
+        <p><span class="lbl">Rule</span>The average across every student assessed in that compulsory round (Term 1 or Term 3). Entry assessments aren't included, so each point covers the same group. On the item graph, an item a student hasn't reached counts as 0%.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Change on every item</b><span class="where">Item progress</span></div>
+        <p><span class="lbl">Rule</span>The group's average score on each item at the latest round, minus its average at the first round of the year. Green bars went up and orange bars went down.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Shared teaching targets</b><span class="where">Shared teaching targets</span></div>
+        <p><span class="lbl">Rule</span>An item that's a teaching target for 2 or more students at their latest assessment of the year. The 6 items shared by the most students are shown.</p>
+      </div>
+    </div>
+  </section>
+  </aside>
 </div>
 
 <!-- ============ SCHOOL VIEW ============ -->
@@ -471,6 +527,37 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <p>Items marked “Hard across the whole program” are chosen by program administrators. The tag carries no numbers and says nothing about any other school. It's there so a low rate on that item isn't read as a problem with your own teaching.</p>
     <p id="sc-ownNote"></p>
   </footer>
+  <aside class="footnote" id="fn-school" aria-label="How the flags on this page are worked out">
+    <p class="eyebrow">Footnote · How the flags on this page are worked out</p>
+  <section class="fn-part" id="cr-school" aria-labelledby="cr-schoolTitle">
+    <h3 id="cr-schoolTitle">School report</h3>
+    <p class="sub">School staff only see their own school's numbers. Nothing here is compared with other schools.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-head"><b>Working on an item</b><span class="where">Item reach rates, hardest items</span></div>
+        <p><span class="lbl">Rule</span>A student is working on an item if it was one of their teaching targets at their first assessment of the year.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Reach rate</b><span class="where">Item reach rates, item detail</span></div>
+        <p><span class="lbl">Rule</span>Of the students working on an item, the share who scored 100% on it at their last assessment that year.</p>
+        <p><span class="lbl">Example</span>8 students had item 9 as a target in Term 1. By Term 3, 6 of them scored 100% on it. The reach rate is 6 ÷ 8 = 75%.</p>
+        <p><span class="lbl">Why this measure</span>Average item scores mostly show how far students have got through the assessment. The reach rate only counts students for whom the item was the next thing to teach, so it says more about how well that item is being taught.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Too few students</b><span class="where">Dashed squares</span></div>
+        <p><span class="lbl">Rule</span>No rate is shown when fewer than 3 students were working on the item. One or two students can swing a rate from 0% to 100%.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="tag warn">12%</span><b>Hardest items</b><span class="where">Hardest items</span></div>
+        <p><span class="lbl">Rule</span>The 5 items with the lowest reach rate that year, from items with at least 3 students working on them. “Also one of the hardest in…” means the item was in the hardest 5 in that other year too.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="status prog">Hard across the whole program</span><b>Program tag</b><span class="where">Hardest items, grid, item detail</span></div>
+        <p><span class="lbl">Rule</span>Program administrators choose which items get this tag, using the program report's “Items that are hard everywhere”. Schools see the tag only, with no numbers. In the demo, item 10 is tagged.</p>
+      </div>
+    </div>
+  </section>
+  </aside>
 </div>
 
 <!-- ============ PROGRAM VIEW ============ -->
@@ -550,6 +637,64 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <p>An item is only flagged when a school is behind by more than chance would explain, given how many students were working on it. For example, 1 of 4 students against a program average of 50% isn't flagged, but 3 of 12 is.</p>
     <p>A flag or a “Check in” doesn't say why a school is behind. It's a prompt to look closer and offer training or support where it would help.</p>
   </footer>
+  <aside class="footnote" id="fn-program" aria-label="How the flags on this page are worked out">
+    <p class="eyebrow">Footnote · How the flags on this page are worked out</p>
+  <section class="fn-part" id="cr-program" aria-labelledby="cr-programTitle">
+    <h3 id="cr-programTitle">Program report</h3>
+    <p class="sub">Program administrators only. They see every school, year group and class, but never an individual student.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-head"><span class="sig-key below">!</span><span class="sig-key well">!!</span><b>Item signals</b><span class="where">Item signals by school</span></div>
+        <p><span class="lbl">Rule</span>An item is flagged for a school when all three of these are true:</p>
+        <ol class="steps">
+          <li>At least 3 of the school's students were working on it.</li>
+          <li>The school's reach rate is lower than the whole program's.</li>
+          <li>The gap is too big to put down to chance. Suppose the school's students were exactly as likely to reach the item as the program average. What's the chance of a result this low, or lower, just by luck? <b>Below</b>: less than 1 in 10 (0.10). <b>Well below</b>: less than 1 in 50 (0.02).</li>
+        </ol>
+        <p><span class="lbl">Why this rule</span>A fixed rule like “15 points behind” flags small schools all the time. With 4 students, one student is 25 points. This rule needs a bigger gap when fewer students are involved, and a smaller gap when more are.</p>
+        <p><span class="lbl">How the chance is worked out</span>It's a one-sided binomial test. If <i>n</i> students were working on the item, <i>k</i> reached it, and the program reach rate is <i>p</i>, the chance is the sum, for every <i>i</i> from 0 to <i>k</i>, of C(<i>n</i>, <i>i</i>) × <i>p</i><sup><i>i</i></sup> × (1 − <i>p</i>)<sup><i>n</i> − <i>i</i></sup>.</p>
+        <div class="tbl-wrap"><table class="examples">
+          <thead><tr><th>Students working</th><th>Reached 100%</th><th>Program rate</th><th>Chance it's luck</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>4</td><td>1 (25%)</td><td>50%</td><td>0.31 (about 1 in 3)</td><td>Not flagged</td></tr>
+            <tr><td>12</td><td>3 (25%)</td><td>50%</td><td>0.073 (about 1 in 14)</td><td><span class="status warn">Below</span></td></tr>
+            <tr><td>11</td><td>0 (0%)</td><td>22%</td><td>0.065 (about 1 in 15)</td><td><span class="status warn">Below</span></td></tr>
+            <tr><td>18</td><td>1 (6%)</td><td>48%</td><td>0.0001 (about 1 in 7,000)</td><td><span class="status crit">Well below</span></td></tr>
+          </tbody>
+        </table></div>
+        <p class="sub">The first two rows have the same 25% rate. Only the second is flagged, because 12 students is much stronger evidence than 4.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="status">Check in</span><b>School to check in with</b><span class="where">Schools table, summary numbers</span></div>
+        <p><span class="lbl">Rule</span>A school is marked when either of these is true for the year:</p>
+        <ol class="steps">
+          <li>It has 2 or more items flagged Below or Well below.</li>
+          <li>At least 8 of its students have a levels gained figure, and their average is 0.3 levels or more below the program average.</li>
+        </ol>
+        <p><span class="lbl">Example</span>The program averages +1.0 levels. A school averaging +0.6 across 19 students is marked, even with only one flagged item.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="tag warn">9%</span><b>Items that are hard everywhere</b><span class="where">Items that are hard everywhere</span></div>
+        <p><span class="lbl">Rule</span>The program's reach rate for every item with at least 40 students working on it across the program. The 4 lowest are highlighted. “Under 35% in X of Y schools” counts the schools, with at least 3 students working on the item, whose own rate is below 35%.</p>
+        <p><span class="lbl">How to read it</span>An item that's low in most schools probably points to the item, its resources or the training, rather than to any one school. Administrators can then tag it so schools see “Hard across the whole program”.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>School dots</b><span class="where">Progress year by year</span></div>
+        <p><span class="lbl">Rule</span>Each dot is one school's average levels gained that year. The bar is the whole program.</p>
+      </div>
+    </div>
+  </section>
+  <section class="fn-part" id="cr-calc" aria-labelledby="cr-calcTitle">
+    <h3 id="cr-calcTitle">Try the item signal test</h3>
+    <p class="sub">Enter a school's numbers for one item to see whether it would be flagged.</p>
+    <div class="calc">
+      <label class="field" for="cr-n">Students working on the item <input type="number" id="cr-n" min="3" max="200" value="12"></label>
+      <label class="field" for="cr-k">Of those, reached 100% <input type="number" id="cr-k" min="0" max="200" value="3"></label>
+      <label class="field" for="cr-p">Program reach rate (%) <input type="number" id="cr-p" min="1" max="99" value="50"></label>
+    </div>
+    <div class="calc-out" id="cr-out" aria-live="polite"></div>
+  </section>
+  </aside>
 </div>
 
 <!-- ============ STUDENT VIEW ============ -->
@@ -652,6 +797,58 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <p>Current level is the last item scored at 100% before the three items in a row that stopped the assessment.</p>
     <p>There are two versions of the assessment, Standard and AAC. A student starts on one and stays on it. The label at the top says which.</p>
   </footer>
+  <aside class="footnote" id="fn-student" aria-label="How the flags on this page are worked out">
+    <p class="eyebrow">Footnote · How the flags on this page are worked out</p>
+  <section class="fn-part" id="cr-basics" aria-labelledby="cr-basicsTitle">
+    <h3 id="cr-basicsTitle">The basics</h3>
+    <p class="sub">Everything else is built from these four rules.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-head"><b>Stop point</b><span class="where">Student report</span></div>
+        <p><span class="lbl">Rule</span>The first three items in a row scored below 100%. The assessment ends on the third.</p>
+        <p><span class="lbl">Example</span>Scores of 100, 100, 80, 100, 90, 60, 40 stop at items 5, 6 and 7. Item 3 (80%) isn't part of the stop point because the next item was 100%.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Level</b><span class="where">Every report</span></div>
+        <p><span class="lbl">Rule</span>The last item scored 100% before the stop point.</p>
+        <p><span class="lbl">Example</span>In the scores above, the level is 4. Item 4 is the last 100% before the stop at items 5–7.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Total %</b><span class="where">Student, teacher, year group</span></div>
+        <p><span class="lbl">Rule</span>All 36 item scores added up and divided by 3,600. Items not reached count as 0.</p>
+        <p><span class="lbl">Example</span>The scores above add up to 570, so the total is 570 ÷ 3,600 = 15.8%.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Teaching targets</b><span class="where">Student report, and the base for item rates</span></div>
+        <p><span class="lbl">Rule</span>Every item below 100% in an assessment: gaps (items at or below the level) plus the three stop point items.</p>
+        <p><span class="lbl">Example</span>In the scores above, the targets are item 3 (a gap) and items 5, 6 and 7 (the stop point).</p>
+      </div>
+    </div>
+  </section>
+  <section class="fn-part" id="cr-student" aria-labelledby="cr-studentTitle">
+    <h3 id="cr-studentTitle">Student report</h3>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-head"><span class="tag">Gap</span><b>Gap below level</b><span class="where">Teaching targets, At a glance</span></div>
+        <p><span class="lbl">Rule</span>An item at or below the student's level that scored below 100% in their latest assessment. If the item was 100% in an earlier assessment, the flag adds “this skill may be slipping”.</p>
+        <p><span class="lbl">Example</span>Level 11, but item 6 scored 90%: item 6 is a gap. It was 100% a year ago, so it may be slipping.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="tag">Stuck</span><b>Stuck item</b><span class="where">At a glance</span></div>
+        <p><span class="lbl">Rule</span>An item below 100% in the latest assessment, and below 100% in every one of at least 3 assessments that reached it.</p>
+        <p><span class="lbl">Example</span>Item 12 scored 30%, 60% and 80% across three assessments. It's improving, but it has never reached 100%, so it's flagged as stuck.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><span class="tag info">New</span><b>New at 100%</b><span class="where">At a glance</span></div>
+        <p><span class="lbl">Rule</span>An item scored 100% for the first time in the latest assessment, having been reached before.</p>
+      </div>
+      <div class="rule">
+        <div class="rule-head"><b>Item history shading</b><span class="where">Item history</span></div>
+        <p><span class="lbl">Rule</span>Darker means a higher score. An orange outline marks the stop point items in that assessment. A dashed square means the item wasn't reached.</p>
+      </div>
+    </div>
+  </section>
+  </aside>
 </div>
 <div id="tip" hidden></div>
 
@@ -1718,6 +1915,28 @@ $("#s-showPrev").addEventListener("change", renderBars);
 $("#s-moreBtn").addEventListener("click", () => { S.showAll = !S.showAll; renderBars(); });
 $("#s-mTotal").onclick = () => { S.metric = "total"; $("#s-mTotal").setAttribute("aria-pressed", true); $("#s-mLevel").setAttribute("aria-pressed", false); drawStudentLine(); };
 $("#s-mLevel").onclick = () => { S.metric = "level"; $("#s-mLevel").setAttribute("aria-pressed", true); $("#s-mTotal").setAttribute("aria-pressed", false); drawStudentLine(); };
+
+/* ================= ITEM SIGNAL CALCULATOR (program footnote) ================= */
+function runCalc() {
+  const n = Math.max(0, Math.round(+$("#cr-n").value || 0));
+  const k = Math.max(0, Math.round(+$("#cr-k").value || 0));
+  const p = Math.min(99, Math.max(1, +$("#cr-p").value || 0)) / 100;
+  const out = $("#cr-out");
+  if (k > n) { out.innerHTML = `<p>“Reached 100%” can't be more than the number of students working on the item.</p>`; return; }
+  if (n < MIN_WORKING) { out.innerHTML = `<p><span class="status">Not compared</span> Fewer than ${MIN_WORKING} students were working on the item, so no rate is compared.</p>`; return; }
+  const school = k / n * 100;
+  const chance = binomLE(k, n, p);
+  const oneIn = chance > 0 ? Math.round(1 / chance) : Infinity;
+  const result = school >= p * 100 ? "ok" : chance < SIG.WELL ? "well" : chance < SIG.BELOW ? "below" : "ok";
+  const label = { ok: "Not flagged", below: "Below", well: "Well below" }[result];
+  out.innerHTML = `
+    <p><b>School reach rate:</b> ${k} of ${n} = ${Math.round(school)}%. <b>Program:</b> ${Math.round(p * 100)}%.</p>
+    <p><b>Chance of ${k} or fewer reaching it, if the school matched the program:</b> ${chance < 0.001 ? chance.toExponential(1) : chance.toFixed(3)}${isFinite(oneIn) ? ` (about 1 in ${oneIn.toLocaleString("en-AU")})` : ""}.</p>
+    <p><b>Result:</b> <span class="status ${result === "well" ? "crit" : result === "below" ? "warn" : "info"}">${label}</span>
+    ${result === "ok" ? (school >= p * 100 ? "The school is at or above the program rate." : "The gap could easily be luck with this many students.") : result === "below" ? "Less than a 1 in 10 chance it's luck." : "Less than a 1 in 50 chance it's luck."}</p>`;
+}
+["#cr-n", "#cr-k", "#cr-p"].forEach((id) => $(id).addEventListener("input", runCalc));
+runCalc();
 
 /* ================= ROUTING ================= */
 // #teacher, #yeargroup, #school, #program, or a student id such as #s07.
