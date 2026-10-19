@@ -531,7 +531,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <div class="panel-head">
       <div class="titles">
         <h2 id="pg-hardTitle">Items that are hard everywhere</h2>
-        <p class="sub">How often students across the whole program reached 100% on each item they were working on. An item that is low in most schools may point to the item, its resources or the training, rather than to any one school.</p>
+        <p class="sub">How often students across the whole program reached 100% on each item they were working on. An item that is low in most schools may point to the item, its resources or the training, rather than to any one school. Only items with at least 40 students working on them are shown.</p>
       </div>
     </div>
     <div class="legend"><span><i class="lg-full"></i>Reach rate</span><span><i style="background:var(--warn)"></i>The 4 lowest</span></div>
@@ -1222,6 +1222,7 @@ function itemRates(code, y) {
 }
 const rate = (c) => c.working ? c.reached / c.working * 100 : null;
 const MIN_WORKING = 3;
+const PROGRAM_MIN = 40; // an item needs this many students working on it before it counts as hard everywhere
 function progressOf(students, y) {
   const rows = students.filter((st) => inYear(st, y)).map((st) => ({ st, ...studentYear(st, y) }));
   return { rows, ...gainStats(rows) };
@@ -1447,7 +1448,7 @@ function renderProgram() {
 
   // Items that are hard everywhere
   drawProgramItems();
-  const prog = itemRates("ALL", y).map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= 10).sort((a, b) => rate(a.c) - rate(b.c)).slice(0, 4);
+  const prog = itemRates("ALL", y).map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= PROGRAM_MIN).sort((a, b) => rate(a.c) - rate(b.c)).slice(0, 4);
   $("#pg-hard").innerHTML = prog.map((x) => {
     const others = YEARS.filter((yy) => yy !== y).map((yy) => { const c = itemRates("ALL", yy)[x.n - 1]; return c.working ? `${yy}: ${Math.round(rate(c))}%` : null; }).filter(Boolean);
     const low = codes.filter((c) => { const s = itemRates(c, y)[x.n - 1]; return s.working >= MIN_WORKING && rate(s) < 35; }).length;
@@ -1471,7 +1472,7 @@ function drawProgramItems() {
   const m = { t: 14, r: 8, b: 28, l: 46 };
   const y = (v) => H - m.b - v / 100 * (H - m.t - m.b);
   const bw = (W - m.l - m.r) / TOTAL_ITEMS;
-  const valid = rates.map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= 10);
+  const valid = rates.map((c, i) => ({ n: i + 1, c })).filter((x) => x.c.working >= PROGRAM_MIN);
   const lowest = valid.slice().sort((a, b) => rate(a.c) - rate(b.c)).slice(0, 4).map((x) => x.n);
   let s = "";
   [0, 50, 100].forEach((v) => {
@@ -1481,9 +1482,9 @@ function drawProgramItems() {
   [1, 6, 12, 18, 24, 30, 36].forEach((n) => { s += `<text class="axis-text num" x="${m.l + (n - 0.5) * bw}" y="${H - 8}" text-anchor="middle">${n}</text>`; });
   rates.forEach((c, i) => {
     const n = i + 1, x = m.l + i * bw + 1, w = Math.max(2, bw - 2);
-    const ok = c.working >= 10;
+    const ok = c.working >= PROGRAM_MIN;
     if (ok) s += `<rect x="${x}" y="${y(rate(c))}" width="${w}" height="${y(0) - y(rate(c))}" rx="2" fill="${lowest.includes(n) ? "var(--warn)" : "var(--accent)"}"/>`;
-    const t = ok ? `Item ${n}: ${c.reached} of ${c.working} students reached 100% (${Math.round(rate(c))}%)` : `Item ${n}: fewer than 10 students working on it across the program`;
+    const t = ok ? `Item ${n}: ${c.reached} of ${c.working} students reached 100% (${Math.round(rate(c))}%)` : `Item ${n}: fewer than 40 students working on it across the program`;
     s += `<rect class="bar-hit" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" data-tip="${t}"/>`;
   });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg>`;
