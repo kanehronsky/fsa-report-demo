@@ -413,8 +413,8 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
     </div>
     <div class="legend">
       <span><i class="sig-key ok"></i>Similar to or better than all schools</span>
-      <span><i class="sig-key below">!</i>Below (15 to 29 points behind)</span>
-      <span><i class="sig-key well">!!</i>Well below (30 or more points behind)</span>
+      <span><i class="sig-key below">!</i>Below: behind, with less than a 1 in 10 chance it's luck</span>
+      <span><i class="sig-key well">!!</i>Well below: behind, with less than a 1 in 50 chance it's luck</span>
       <span><i class="sig-key few"></i>Fewer than 3 students working on it</span>
     </div>
     <div class="tbl-wrap"><table class="sig-grid" id="sc-grid"></table></div>
@@ -457,7 +457,8 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> A student is “working on” an item if it was one of their teaching targets at their first assessment of the year: a gap below their level, or one of the three items where the assessment stopped. The item counts as reached if they scored 100% on it at their last assessment that year.</p>
-    <p>An item is only flagged when at least 3 students at the school were working on it, so one student can't set off a warning on their own.</p>
+    <p>An item is only flagged when the school is behind by more than chance would explain, given how many students were working on it. For example, 1 of 4 students against an average of 50% isn't flagged, but 3 of 12 is. Nothing is flagged with fewer than 3 students.</p>
+    <p>In this demo, “all schools” also includes 12 other made-up schools that stand in for the rest of the program.</p>
     <p>A flag doesn't say why a school is behind. It's a prompt to look closer and to offer training or support where it would help.</p>
   </footer>
 </div>
@@ -659,26 +660,33 @@ const NAMES = {
 const COHORT = { 0: 3, 1: 4, 2: 3, 3: 3, 4: 2, 5: 2, 6: 2 };
 // Which Year 1 class each student was in (Year 1 is split between Rooms 1 and 2).
 const SPLITS = { 1: ["Room 1", "Room 1", "Room 2", "Room 2"], 2: ["Room 1", "Room 1", "Room 2"], 3: ["Room 1", "Room 2", "Room 2"] };
-["B", "C"].forEach((code) => {
+function genSpecs(code, names) {
   const rng = mulberry32(seedOf("school" + code));
+  const out = [];
   let k = 0;
   for (let yl = 0; yl <= 6; yl++) {
     for (let j = 0; j < COHORT[yl]; j++) {
       const first = yl === 0 ? 4 : yl === 1 ? 2 : 0;
       const startYl = yl - (2026 - ROUNDS[first].year);
       const sp = {
-        id: code.toLowerCase() + String(k + 1).padStart(2, "0"), name: NAMES[code][k], school: code, yl,
+        id: code.toLowerCase() + String(k + 1).padStart(2, "0"), name: names ? names[k] : `${code} student ${k + 1}`, school: code, yl,
         type: rng() < 0.15 ? "aac" : "standard", first, last: 5,
         L0: 1 + startYl * 2 + Math.floor(rng() * 3), g: 0.8 + rng() * 0.7,
         gaps: rng() < 0.3 ? [2 + Math.floor(rng() * 8)] : [],
         split: SPLITS[yl] ? SPLITS[yl][j] : undefined,
       };
       if (yl === 1 && j === 3) { sp.entry = "2025-05-19"; sp.first = 3; }
-      STUDENT_SPECS.push(sp);
+      out.push(sp);
       k++;
     }
   }
-});
+  return out;
+}
+STUDENT_SPECS.push(...genSpecs("B", NAMES.B), ...genSpecs("C", NAMES.C));
+// The rest of the program: 12 more made-up schools. They are not shown on their own,
+// but they go into the "all schools" average, the way the rest of the state will in real data.
+const BG_CODES = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"];
+const BG_SCHOOL = { g: 1, hard: {}, rooms: {} };
 
 const ylNum = (st, y) => st.yl - (2026 - y);
 const ylName = (n) => n < 0 ? "Kindergarten" : n === 0 ? "Pre-primary" : "Year " + n;
@@ -701,8 +709,8 @@ function genScores(ability, gaps, rng, hard) {
     if (i <= ability) {
       v = 100;
       if (run < 2) {
-        if (hard.includes(i) && rng() < 0.8) v = [50, 60, 70, 80][Math.floor(rng() * 4)];
-        else if (gaps.includes(i) && rng() < 0.75) v = [60, 70, 80, 90][Math.floor(rng() * 4)];
+        if (hard.includes(i) && rng() < 0.9) v = [50, 60, 70, 80][Math.floor(rng() * 4)];
+        else if (gaps.includes(i) && rng() < 0.45) v = [60, 70, 80, 90][Math.floor(rng() * 4)];
         else if (rng() < 0.04) v = 90;
       }
     } else {
@@ -732,7 +740,7 @@ function analyse(a) {
   return { ...a, level, total, stopItems, gaps, reached: s.length };
 }
 
-const STUDENTS = STUDENT_SPECS.map((sp) => {
+function buildStudent(sp) {
   const rng = mulberry32(seedOf(sp.id));
   const slots = [];
   if (sp.entry) slots.push({ round: null, date: sp.entry, year: +sp.entry.slice(0, 4), term: "Entry" });
@@ -740,7 +748,7 @@ const STUDENTS = STUDENT_SPECS.map((sp) => {
   const start = +new Date(slots[0].date);
   const assessments = slots.map((sl) => {
     const halfYears = (+new Date(sl.date) - start) / (182 * 864e5);
-    const sch = SCHOOLS[sp.school];
+    const sch = SCHOOLS[sp.school] || BG_SCHOOL;
     const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * sch.g * halfYears + rng() * 1.4 - 0.7)));
     const hard = Object.keys(sch.hard).filter((n) => sch.hard[n].includes(sl.year)).map(Number);
     return analyse({ ...sl, cls: roomOf(sp, sl.year), yearLevel: ylNum(sp, sl.year), scores: genScores(ability, sp.gaps, rng, hard) });
@@ -748,7 +756,9 @@ const STUDENTS = STUDENT_SPECS.map((sp) => {
   const byRound = {};
   assessments.forEach((a) => { if (a.round != null) byRound[a.round] = a; });
   return { ...sp, assessments, byRound };
-});
+}
+const STUDENTS = STUDENT_SPECS.map(buildStudent);
+const ALL_STUDENTS = STUDENTS.concat(BG_CODES.flatMap((c) => genSpecs(c)).map(buildStudent));
 const BY_ID = Object.fromEntries(STUDENTS.map((s) => [s.id, s]));
 
 /* ---------- Helpers ---------- */
@@ -1094,16 +1104,25 @@ $("#t-byClass").addEventListener("click", (e) => {
 });
 
 /* ================= SCHOOL VIEW ================= */
-// An item is flagged when the school's reach rate is well behind the average across all schools,
-// and only when at least SIG.MIN students at the school were working on it.
-const SIG = { MIN: 3, BELOW: 15, WELL: 30 };
+// An item is flagged when the school's reach rate is behind the average across all schools by more than
+// chance would explain, given how many students were working on it (a one-sided binomial test).
+// "Below": less than a 1 in 10 chance. "Well below": less than a 1 in 50 chance. Never flagged under SIG.MIN students.
+const SIG = { MIN: 3, BELOW: 0.10, WELL: 0.02 };
+function binomLE(k, n, p) {
+  let s = 0, c = 1;
+  for (let i = 0; i <= k; i++) {
+    if (i > 0) c = c * (n - i + 1) / i;
+    s += c * Math.pow(p, i) * Math.pow(1 - p, n - i);
+  }
+  return s;
+}
 const SIG_NAME = { ok: "Similar or better", below: "Below", well: "Well below", few: "Too few students" };
 const memo = {};
 function itemRates(code, y) {
   const key = code + y;
   if (memo[key]) return memo[key];
   const out = Array.from({ length: TOTAL_ITEMS }, () => ({ working: 0, reached: 0 }));
-  STUDENTS.filter((st) => code === "ALL" || st.school === code).forEach((st) => {
+  (code === "ALL" ? ALL_STUDENTS : STUDENTS.filter((st) => st.school === code)).forEach((st) => {
     const as = st.assessments.filter((a) => a.year === y);
     if (as.length < 2) return;
     const first = as[0], last = as[as.length - 1];
@@ -1117,9 +1136,10 @@ function itemRates(code, y) {
 const rate = (c) => c.working ? c.reached / c.working * 100 : null;
 function signal(code, y, n) {
   const c = itemRates(code, y)[n - 1], b = itemRates("ALL", y)[n - 1];
-  if (c.working < SIG.MIN) return { s: "few", c, b };
+  if (c.working < SIG.MIN || !b.working) return { s: "few", c, b };
   const diff = rate(c) - rate(b);
-  return { s: diff <= -SIG.WELL ? "well" : diff <= -SIG.BELOW ? "below" : "ok", c, b, diff };
+  const chance = binomLE(c.reached, c.working, Math.min(0.999, b.reached / b.working));
+  return { s: diff < 0 && chance < SIG.WELL ? "well" : diff < 0 && chance < SIG.BELOW ? "below" : "ok", c, b, diff };
 }
 function progressOf(students, y) {
   const rows = students.filter((st) => inYear(st, y)).map((st) => ({ st, ...studentYear(st, y) }));
@@ -1132,7 +1152,7 @@ const pctOf = (a, b) => b ? Math.round(a / b * 100) + "%" : "—";
 function renderSchool() {
   const y = G.year, code = G.school, sch = SCHOOLS[code];
   const sts = schoolStudents(code);
-  const p = progressOf(sts, y), all = progressOf(STUDENTS, y);
+  const p = progressOf(sts, y), all = progressOf(ALL_STUDENTS, y);
 
   $("#sc-school").innerHTML = Object.entries(SCHOOLS).map(([c, s]) => `<option value="${c}" ${c === code ? "selected" : ""}>${s.name}</option>`).join("");
   $("#sc-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
@@ -1149,7 +1169,7 @@ function renderSchool() {
   ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
 
   // Year by year
-  const yearsData = YEARS.map((yy) => ({ y: yy, p: progressOf(sts, yy), all: progressOf(STUDENTS, yy), flagged: flaggedCount(code, yy) }));
+  const yearsData = YEARS.map((yy) => ({ y: yy, p: progressOf(sts, yy), all: progressOf(ALL_STUDENTS, yy), flagged: flaggedCount(code, yy) }));
   drawYearBars();
   $("#sc-yearTable").innerHTML = `<tr><th>Year</th><th>Students</th><th>Average levels gained</th><th>All schools</th><th>Moved up</th><th>All schools</th><th>Items flagged</th></tr>` +
     yearsData.map((d) => `<tr><td>${d.y}</td><td>${d.p.rows.length}</td><td>${signed(d.p.avgGain, r1)}</td><td>${signed(d.all.avgGain, r1)}</td><td>${pctOf(d.p.moved, d.p.changes.length)}</td><td>${pctOf(d.all.moved, d.all.changes.length)}</td><td>${d.flagged}</td></tr>`).join("");
@@ -1213,7 +1233,7 @@ function renderSchool() {
 function drawYearBars() {
   const el = $("#sc-yearChart");
   const code = G.school;
-  const data = YEARS.map((yy) => ({ y: yy, v: progressOf(schoolStudents(code), yy).avgGain, b: progressOf(STUDENTS, yy).avgGain }));
+  const data = YEARS.map((yy) => ({ y: yy, v: progressOf(schoolStudents(code), yy).avgGain, b: progressOf(ALL_STUDENTS, yy).avgGain }));
   const W = Math.max(300, el.clientWidth), H = 210;
   const m = { t: 26, r: 16, b: 30, l: 40 };
   const yMax = Math.max(1, Math.ceil(Math.max(...data.map((d) => Math.max(d.v || 0, d.b || 0))) + 0.4));
