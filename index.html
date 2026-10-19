@@ -177,6 +177,10 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .chip.admin { color: var(--suggest); border-color: var(--suggest); }
 .status.warn { background: var(--warn-soft); color: var(--warn); }
 .status.crit { background: var(--crit); color: var(--on-crit); }
+.status.prog { background: var(--suggest-soft); color: var(--suggest); text-transform: none; letter-spacing: 0; font-size: 12px; }
+h2 .status { vertical-align: 3px; }
+.sig.tagged { color: var(--suggest); font-size: 10px; outline: 2px solid var(--suggest); outline-offset: -2px; }
+.sig-key.tagged { outline: 2px solid var(--suggest); outline-offset: -2px; color: var(--suggest); background: var(--surface); }
 select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
 .ramp { display: inline-flex; align-items: center; gap: 4px; }
 .ramp i { margin: 0 !important; }
@@ -422,6 +426,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <div class="legend">
       <span class="ramp"><span>0%</span><i style="background:color-mix(in oklab, var(--accent) 10%, var(--surface))"></i><i style="background:color-mix(in oklab, var(--accent) 55%, var(--surface))"></i><i style="background:var(--accent)"></i><span>100%</span></span>
       <span><i class="sig-key few"></i>Fewer than 3 students working on it</span>
+      <span><i class="sig-key tagged">P</i>Hard across the whole program</span>
     </div>
     <div class="tbl-wrap"><table class="sig-grid" id="sc-grid"></table></div>
   </section>
@@ -463,6 +468,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
 
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> A student is “working on” an item if it was one of their teaching targets at their first assessment of the year: a gap below their level, or one of the three items where the assessment stopped. The item counts as reached if they scored 100% on it at their last assessment that year.</p>
+    <p>Items marked “Hard across the whole program” are chosen by program administrators. The tag carries no numbers and says nothing about any other school. It's there so a low rate on that item isn't read as a problem with your own teaching.</p>
     <p id="sc-ownNote"></p>
   </footer>
 </div>
@@ -531,7 +537,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <div class="panel-head">
       <div class="titles">
         <h2 id="pg-hardTitle">Items that are hard everywhere</h2>
-        <p class="sub">How often students across the whole program reached 100% on each item they were working on. An item that is low in most schools may point to the item, its resources or the training, rather than to any one school. Only items with at least 40 students working on them are shown.</p>
+        <p class="sub">How often students across the whole program reached 100% on each item they were working on. An item that is low in most schools may point to the item, its resources or the training, rather than to any one school. Only items with at least 40 students working on them are shown. Items marked “Tagged for schools” show up in every school's report as “Hard across the whole program”, with no numbers.</p>
       </div>
     </div>
     <div class="legend"><span><i class="lg-full"></i>Reach rate</span><span><i style="background:var(--warn)"></i>The 4 lowest</span></div>
@@ -1222,6 +1228,11 @@ function itemRates(code, y) {
 }
 const rate = (c) => c.working ? c.reached / c.working * 100 : null;
 const MIN_WORKING = 3;
+// Items program administrators have tagged as hard across the whole program. Schools see the tag, with no numbers,
+// so they don't read a program-wide problem as a problem with their own teaching.
+const PROGRAM_TAGGED = [10];
+const TAG_NOTE = "Hard across the whole program";
+const tagChip = (n) => PROGRAM_TAGGED.includes(n) ? ` <span class="status prog">${TAG_NOTE}</span>` : "";
 const PROGRAM_MIN = 40; // an item needs this many students working on it before it counts as hard everywhere
 function progressOf(students, y) {
   const rows = students.filter((st) => inYear(st, y)).map((st) => ({ st, ...studentYear(st, y) }));
@@ -1294,7 +1305,8 @@ function renderSchool() {
         return;
       }
       const r = rate(c);
-      g += `<td><div class="sig${n === G.scItem ? " sel" : ""}" data-n="${n}" tabindex="0" role="button" style="background:color-mix(in oklab, var(--accent) ${10 + r * 0.9}%, var(--surface))" data-tip="Item ${n}, ${yy}: ${c.reached} of ${c.working} students reached 100% (${Math.round(r)}%)"></div></td>`;
+      const tagged = PROGRAM_TAGGED.includes(n);
+      g += `<td><div class="sig${n === G.scItem ? " sel" : ""}${tagged ? " tagged" : ""}" data-n="${n}" tabindex="0" role="button" style="background:color-mix(in oklab, var(--accent) ${10 + r * 0.9}%, var(--surface))" data-tip="Item ${n}, ${yy}: ${c.reached} of ${c.working} students reached 100% (${Math.round(r)}%)${tagged ? ". " + TAG_NOTE : ""}">${tagged ? "P" : ""}</div></td>`;
     });
     g += "</tr>";
   });
@@ -1304,7 +1316,7 @@ function renderSchool() {
   $("#sc-watchTitle").textContent = `Hardest items in ${y}`;
   $("#sc-watch").innerHTML = hardest.length ? hardest.map((h) => {
     const other = YEARS.filter((yy) => yy !== y && hardestItems(code, yy).slice(0, 5).some((x) => x.n === h.n));
-    return `<li><span class="tag warn">${Math.round(rate(h.c))}%</span><span><a href="#school" data-item="${h.n}"><b>Item ${h.n}</b></a>: ${h.c.reached} of ${h.c.working} students working on it reached 100%.${other.length ? ` Also one of the hardest in ${other.join(" and ")}.` : ""}</span></li>`;
+    return `<li><span class="tag warn">${Math.round(rate(h.c))}%</span><span><a href="#school" data-item="${h.n}"><b>Item ${h.n}</b></a>${tagChip(h.n)}: ${h.c.reached} of ${h.c.working} students working on it reached 100%.${other.length ? ` Also one of the hardest in ${other.join(" and ")}.` : ""}${PROGRAM_TAGGED.includes(h.n) ? " Students across the program find this item hard, so a low rate here isn't only about your school." : ""}</span></li>`;
   }).join("") : `<li><span class="tag info">None</span><span>Not enough students working on any item in ${y}.</span></li>`;
 
   $("#sc-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === G.scItem ? "selected" : ""}>Item ${i + 1}</option>`).join("");
@@ -1334,7 +1346,7 @@ function drawSchoolBars() {
 }
 function renderSchoolItem() {
   const code = G.school, n = G.scItem;
-  $("#sc-itemTitle").textContent = `Item ${n} year by year`;
+  $("#sc-itemTitle").innerHTML = `Item ${n} year by year${tagChip(n)}`;
   $("#sc-itemBars").innerHTML = YEARS.map((yy) => {
     const c = itemRates(code, yy)[n - 1], r = rate(c);
     const body = c.working < MIN_WORKING
@@ -1453,7 +1465,7 @@ function renderProgram() {
     const others = YEARS.filter((yy) => yy !== y).map((yy) => { const c = itemRates("ALL", yy)[x.n - 1]; return c.working ? `${yy}: ${Math.round(rate(c))}%` : null; }).filter(Boolean);
     const low = codes.filter((c) => { const s = itemRates(c, y)[x.n - 1]; return s.working >= MIN_WORKING && rate(s) < 35; }).length;
     const withData = codes.filter((c) => itemRates(c, y)[x.n - 1].working >= MIN_WORKING).length;
-    return `<li><span class="tag warn">${Math.round(rate(x.c))}%</span><span><b>Item ${x.n}</b>: ${x.c.reached} of ${x.c.working} students working on it reached 100% across the program.${others.length ? ` ${others.join(", ")}.` : ""} Under 35% in ${low} of the ${withData} schools with enough students.</span></li>`;
+    return `<li><span class="tag warn">${Math.round(rate(x.c))}%</span><span><b>Item ${x.n}</b>${PROGRAM_TAGGED.includes(x.n) ? ` <span class="status prog">Tagged for schools</span>` : ""}:${x.c.reached} of ${x.c.working} students working on it reached 100% across the program.${others.length ? ` ${others.join(", ")}.` : ""} Under 35% in ${low} of the ${withData} schools with enough students.</span></li>`;
   }).join("");
 }
 
