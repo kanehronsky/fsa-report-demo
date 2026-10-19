@@ -303,7 +303,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
     <div class="panel-head">
       <div class="titles">
         <h2 id="t-listTitle">Students</h2>
-        <p class="sub">Select a student to open their full report.</p>
+        <p class="sub" id="t-listSub">Select a student to open their full report.</p>
       </div>
     </div>
     <div class="tbl-wrap"><table class="class-table" id="t-students"></table></div>
@@ -546,7 +546,7 @@ select:disabled { opacity: 1; color: var(--ink-2); background: var(--track); }
   </section>
 
   <footer class="notes">
-    <p><b>Who can see this.</b> Only program administrators. School staff can see their own school, year groups, classes and students, but nothing from other schools, including these comparisons.</p>
+    <p><b>Who can see this.</b> Only program administrators. School staff can see their own school, year groups, classes and students, but nothing from other schools, including these comparisons. Program administrators can see every school, year group and class, but never an individual student.</p>
     <p>An item is only flagged when a school is behind by more than chance would explain, given how many students were working on it. For example, 1 of 4 students against a program average of 50% isn't flagged, but 3 of 12 is.</p>
     <p>A flag or a “Check in” doesn't say why a school is behind. It's a prompt to look closer and offer training or support where it would help.</p>
   </footer>
@@ -951,7 +951,7 @@ function lineChart(el, cfg) {
 
 /* ================= GROUP VIEW (teacher or year group) ================= */
 // mode "teacher": one class, chosen by room. mode "yeargroup": every student at one year level, whatever class they are in.
-const G = { role: "admin", mode: "teacher", school: "A", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null, scItem: null };
+const G = { role: "A",mode: "teacher", school: "A", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null, scItem: null };
 const isYG = () => G.mode === "yeargroup";
 const noun = () => isYG() ? "year group" : "class";
 const yearRounds = (y) => ROUNDS.filter((r) => r.year === y);
@@ -1038,7 +1038,11 @@ function renderGroup() {
 
   // Student list. In a year group the second column is the class; in a class it is the year level.
   $("#t-listTitle").textContent = isYG() ? `${ylName(G.yl)} students in ${y}` : `Students in ${y}`;
-  $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>${isYG() ? "Class" : "Year level"}</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
+  $("#t-listSub").textContent = isAdmin()
+    ? "Program administrators can't see individual students. The numbers on this page are for the whole group."
+    : "Select a student to open their full report.";
+  $("#t-students").hidden = isAdmin();
+  $("#t-students").innerHTML = isAdmin() ? "" : `<thead><tr><th>Student</th><th>${isYG() ? "Class" : "Year level"}</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
     rows.map((r) => {
       const lvl = r.last ? r.last.level : 0;
       const ch = r.change == null ? `<span class="sub">One assessment</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
@@ -1176,12 +1180,19 @@ function renderShared(rows) {
   const items = Object.entries(map).filter(([, v]) => v.length > 1).sort((a, b) => b[1].length - a[1].length || a[0] - b[0]).slice(0, 6);
   const label = (s) => isYG() ? `${s.name} <span class="sub">${roomOf(s, G.year)}</span>` : s.name;
   $("#t-shared").innerHTML = items.length ? items.map(([n, sts]) =>
-    `<li><span class="it">Item ${n}</span><span class="cnt">${sts.length} students</span><span class="names">${sts.map((s) => `<a href="#${s.id}">${label(s)}</a>`).join("")}</span></li>`).join("")
+    `<li><span class="it">Item ${n}</span><span class="cnt">${sts.length} students</span><span class="names">${isAdmin() ? "" : sts.map((s) => `<a href="#${s.id}">${label(s)}</a>`).join("")}</span></li>`).join("")
     : `<li><span class="sub">No item is a target for more than one student.</span></li>`;
 }
 
 function renderGroupFlags(rows) {
-  const flags = rows.filter((r) => r.change != null && r.change <= 0).map((r) =>
+  const stuck = rows.filter((r) => r.change != null && r.change <= 0);
+  if (isAdmin()) {
+    $("#t-flags").innerHTML = `<li><span class="tag ${stuck.length ? "" : "info"}">${stuck.length ? "No gain" : "None"}</span><span>${stuck.length
+      ? `${stuck.length} of ${rows.filter((r) => r.change != null).length} students haven't moved up a level in ${G.year}. Names are only shown to school staff.`
+      : `Every student moved up at least one level in ${G.year}.`}</span></li>`;
+    return;
+  }
+  const flags = stuck.map((r) =>
     ["No gain", `<a href="#${r.st.id}">${r.st.name}</a>${isYG() ? ` (${roomOf(r.st, G.year)})` : ""} is at level ${r.last.level}, ${r.change === 0 ? "the same as" : "below"} the start of ${G.year} (level ${r.first.level}).`]);
   $("#t-flags").innerHTML = flags.length ? flags.map(([t, s]) => `<li><span class="tag">${t}</span><span>${s}</span></li>`).join("")
     : `<li><span class="tag info">None</span><span>Every student moved up at least one level in ${G.year}.</span></li>`;
@@ -1550,6 +1561,7 @@ function tabsHTML(current) {
 }
 $("#role").innerHTML = `<option value="admin">Program administrator</option>` +
   ["A", "B", "C"].map((c) => `<option value="${c}">Staff at ${SCHOOLS[c].name}</option>`).join("");
+$("#role").value = G.role;
 $("#role").addEventListener("change", (e) => {
   G.role = e.target.value;
   if (!isAdmin()) { G.school = G.role; G.item = null; G.scItem = null; }
@@ -1714,7 +1726,8 @@ function route() {
   const h = location.hash.slice(1);
   const st = BY_ID[h];
   tip.hidden = true;
-  if (st && !canSee(st.school)) { location.hash = "#teacher"; return; }
+  // Program administrators never see individual students; staff only see their own school's students.
+  if (st && (isAdmin() || !canSee(st.school))) { location.hash = "#teacher"; return; }
   if (h === "program" && !isAdmin()) { location.hash = "#school"; return; }
   if (!st) {
     const mode = ["yeargroup", "school", "program"].includes(h) ? h : "teacher";
