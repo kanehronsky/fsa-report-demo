@@ -20,6 +20,10 @@
   --stop-soft: #F6E6D4;
   --suggest: #5B4FA8;
   --suggest-soft: #ECE9F8;
+  --warn: #8A6100;
+  --warn-soft: #FBF0D0;
+  --crit: #B3261E;
+  --on-crit: #FFFFFF;
   --font-display: "Lexend", "Segoe UI", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
 }
@@ -28,6 +32,7 @@
     --bg: #0E1619; --surface: #152025; --ink: #E3ECEE; --ink-2: #A9B8BD; --muted: #7F9095;
     --line: #26353B; --track: #1F2C31; --accent: #5DB7BC; --accent-soft: #2E6064; --on-accent: #0E1619;
     --stop: #E5A060; --stop-soft: #3A2A1B; --suggest: #A99FEA; --suggest-soft: #262241;
+    --warn: #E8C15A; --warn-soft: #3A3115; --crit: #F2827A; --on-crit: #1A0E0D;
     color-scheme: dark;
   }
 }
@@ -35,6 +40,7 @@
   --bg: #0E1619; --surface: #152025; --ink: #E3ECEE; --ink-2: #A9B8BD; --muted: #7F9095;
   --line: #26353B; --track: #1F2C31; --accent: #5DB7BC; --accent-soft: #2E6064; --on-accent: #0E1619;
   --stop: #E5A060; --stop-soft: #3A2A1B; --suggest: #A99FEA; --suggest-soft: #262241;
+  --warn: #E8C15A; --warn-soft: #3A3115; --crit: #F2827A; --on-crit: #1A0E0D;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -133,6 +139,38 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .summary-line b { font-variant-numeric: tabular-nums; }
 .subhead { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 14px; }
 
+/* School view: item signals and comparison bars */
+.sig-grid { border-collapse: separate; border-spacing: 3px; }
+.sig-grid th { padding: 0 6px 0 0; border: 0; font-size: 12px; text-align: right; }
+.sig-grid thead th { text-align: center; padding: 0 0 2px; font-weight: 400; color: var(--muted); }
+.sig-grid td { padding: 0; border: 0; }
+.sig { width: 24px; height: 24px; border-radius: 4px; display: grid; place-items: center; font-size: 11px; font-weight: 700; cursor: pointer; }
+.sig.ok { background: color-mix(in oklab, var(--accent) 30%, var(--surface)); }
+.sig.below { background: var(--warn-soft); color: var(--warn); outline: 1px solid var(--warn); outline-offset: -1px; }
+.sig.well { background: var(--crit); color: var(--on-crit); }
+.sig.few { background: transparent; border: 1px dashed var(--line); cursor: default; }
+.sig.sel { box-shadow: 0 0 0 2px var(--ink); }
+.sig-key { display: inline-grid !important; place-items: center; width: 16px !important; height: 16px !important; font-size: 9px; font-style: normal; font-weight: 700; vertical-align: -3px !important; }
+.sig-key.ok { background: color-mix(in oklab, var(--accent) 30%, var(--surface)); }
+.sig-key.below { background: var(--warn-soft); color: var(--warn); outline: 1px solid var(--warn); outline-offset: -1px; }
+.sig-key.well { background: var(--crit); color: var(--on-crit); }
+.sig-key.few { border: 1px dashed var(--muted); }
+.lg-bench { width: 3px !important; height: 14px !important; background: var(--ink); border-radius: 0 !important; vertical-align: -3px !important; }
+.flags .tag.warn { background: var(--warn-soft); color: var(--warn); }
+.flags .tag.crit { background: var(--crit); color: var(--on-crit); }
+.compare { display: flex; flex-direction: column; gap: 14px; }
+.cmp-year { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: start; }
+.cmp-year > b { font-family: var(--font-display); padding-top: 2px; }
+.cmp-rows { display: flex; flex-direction: column; gap: 4px; }
+.cmp-row { display: grid; grid-template-columns: 110px 1fr 150px; gap: 10px; align-items: center; font-size: 13px; }
+.cmp-row .who-lbl { color: var(--ink-2); }
+.cmp-row .track { height: 16px; }
+.cmp-row.bench .fill { background: var(--muted); }
+.cmp-row.school .fill { background: var(--accent); }
+.cmp-row .val { font-variant-numeric: tabular-nums; }
+.parts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .parts { grid-template-columns: 1fr; } .cmp-row { grid-template-columns: 80px 1fr; } .cmp-row .val { grid-column: 2; } }
+
 /* Report-level tabs and pickers */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
 .tabs a { font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; color: var(--ink-2); padding: 8px 14px; border-bottom: 3px solid transparent; margin-bottom: -1px; }
@@ -224,6 +262,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <nav class="tabs" aria-label="Report level">
     <a href="#teacher" id="nav-teacher">Teacher</a>
     <a href="#yeargroup" id="nav-yg">Year group</a>
+    <a href="#school">School</a>
   </nav>
   <header class="head">
     <div class="who">
@@ -234,6 +273,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
     <div class="head-tools">
       <span class="chip">Wireframe · demo data only</span>
       <div class="pickers">
+        <label class="field" for="t-school">School <select id="t-school"></select></label>
         <label class="field" for="t-pick"><span id="t-pickLabel">Class</span> <select id="t-pick"></select></label>
         <div class="seg seg-lg" role="group" aria-label="School year" id="t-years"></div>
       </div>
@@ -326,6 +366,100 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   </section>
 
   <footer class="notes" id="t-notes"></footer>
+</div>
+
+<!-- ============ SCHOOL VIEW ============ -->
+<div class="wrap" id="schoolView" hidden>
+  <nav class="tabs" aria-label="Report level">
+    <a href="#teacher">Teacher</a>
+    <a href="#yeargroup">Year group</a>
+    <a href="#school" aria-current="page">School</a>
+  </nav>
+  <header class="head">
+    <div class="who">
+      <span class="eyebrow">Foundational Skills Assessment · School report</span>
+      <h1 id="sc-title"></h1>
+      <div class="meta" id="sc-meta"></div>
+    </div>
+    <div class="head-tools">
+      <span class="chip">Wireframe · demo data only</span>
+      <div class="pickers">
+        <label class="field" for="sc-school">School <select id="sc-school"></select></label>
+        <div class="seg seg-lg" role="group" aria-label="School year" id="sc-years"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="stats four" id="sc-stats" aria-label="School summary"></section>
+
+  <section class="panel" aria-labelledby="sc-yearTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sc-yearTitle">Progress year by year</h2>
+        <p class="sub">Average levels gained per student in each school year, from their first to their last assessment that year.</p>
+      </div>
+    </div>
+    <div class="legend"><span><i class="lg-full"></i><span id="sc-legendSchool">This school</span></span><span><i class="lg-bench"></i>Average across all schools</span></div>
+    <div class="chart" id="sc-yearChart" role="img" aria-label="Bar chart of average levels gained per student each year"></div>
+    <div class="tbl-wrap"><table id="sc-yearTable"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="sc-sigTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sc-sigTitle">Item signals</h2>
+        <p class="sub">For each item: of the students who were working on it at the start of the year, how many had it at 100% by the end? Each school is compared with the average across all schools. Select a square to see that item below.</p>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="sig-key ok"></i>Similar to or better than all schools</span>
+      <span><i class="sig-key below">!</i>Below (15 to 29 points behind)</span>
+      <span><i class="sig-key well">!!</i>Well below (30 or more points behind)</span>
+      <span><i class="sig-key few"></i>Fewer than 3 students working on it</span>
+    </div>
+    <div class="tbl-wrap"><table class="sig-grid" id="sc-grid"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="sc-watchTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sc-watchTitle">Items to look at</h2>
+        <p class="sub" id="sc-watchSub"></p>
+      </div>
+    </div>
+    <ul class="flags" id="sc-watch"></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="sc-itemTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sc-itemTitle">Item detail</h2>
+        <p class="sub">How often students working on this item reached 100% by the end of each year.</p>
+      </div>
+      <label class="field" for="sc-itemSel">Item <select id="sc-itemSel"></select></label>
+    </div>
+    <div class="compare" id="sc-itemBars"></div>
+  </section>
+
+  <section class="panel is-suggest" aria-labelledby="sc-partsTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="sc-partsTitle">Classes and year levels</h2>
+        <p class="sub" id="sc-partsSub"></p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <div class="parts">
+      <div class="tbl-wrap"><table class="class-table" id="sc-classes"></table></div>
+      <div class="tbl-wrap"><table class="class-table" id="sc-levels"></table></div>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p><b>How the numbers are worked out.</b> A student is “working on” an item if it was one of their teaching targets at their first assessment of the year: a gap below their level, or one of the three items where the assessment stopped. The item counts as reached if they scored 100% on it at their last assessment that year.</p>
+    <p>An item is only flagged when at least 3 students at the school were working on it, so one student can't set off a warning on their own.</p>
+    <p>A flag doesn't say why a school is behind. It's a prompt to look closer and to offer training or support where it would help.</p>
+  </footer>
 </div>
 
 <!-- ============ STUDENT VIEW ============ -->
@@ -434,7 +568,6 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 <script>
 /* ---------- Demo data ---------- */
 const TOTAL_ITEMS = 36;
-const SCHOOL = "Example Primary School";
 // Two compulsory rounds a year. New students also get an entry assessment when they start.
 const ROUNDS = [
   { id: 0, year: 2024, term: "Term 1", date: "2024-02-19" },
@@ -445,18 +578,42 @@ const ROUNDS = [
   { id: 5, year: 2026, term: "Term 3", date: "2026-08-10" },
 ];
 const YEARS = [2024, 2025, 2026];
-const ROOMS = {
-  "Room 1": { teacher: "Teacher B", setting: "Pre-primary and Year 1" },
-  "Room 2": { teacher: "Teacher C", setting: "Year 1 and Year 2" },
-  "Room 3": { teacher: "Teacher D", setting: "Year 3 and Year 4" },
-  "Room 4": { teacher: "Teacher A", setting: "Education support class" },
+// hard: items this school finds hard to teach, and in which years. This is what sets off the item signals in the demo.
+// g: how fast students at this school progress compared with the others.
+const SCHOOLS = {
+  A: { name: "School A", g: 1, hard: {}, rooms: {
+    "Room 1": { teacher: "Teacher B", setting: "Pre-primary and Year 1" },
+    "Room 2": { teacher: "Teacher C", setting: "Year 1 and Year 2" },
+    "Room 3": { teacher: "Teacher D", setting: "Year 3 and Year 4" },
+    "Room 4": { teacher: "Teacher A", setting: "Education support class" },
+  } },
+  B: { name: "School B", g: 0.85, hard: { 5: [2024, 2025, 2026], 6: [2024, 2025], 8: [2025, 2026] }, rooms: {
+    "Room 1": { teacher: "Teacher E", setting: "Pre-primary and Year 1" },
+    "Room 2": { teacher: "Teacher F", setting: "Year 1 and Year 2" },
+    "Room 3": { teacher: "Teacher G", setting: "Year 3 and Year 4" },
+  } },
+  C: { name: "School C", g: 1.15, hard: { 3: [2026] }, rooms: {
+    "Room 1": { teacher: "Teacher H", setting: "Pre-primary and Year 1" },
+    "Room 2": { teacher: "Teacher I", setting: "Year 1 and Year 2" },
+    "Room 3": { teacher: "Teacher J", setting: "Year 3 and Year 4" },
+  } },
 };
-// Room 4 is an education support class, so its students are listed by hand.
+// Room 4 at School A is an education support class, so its students are listed by hand.
 const ROOM4 = {
   2024: ["s01", "s02", "s03", "s04", "s05"],
   2025: ["s01", "s02", "s03", "s07", "s08", "s09"],
   2026: ["s01", "s03", "s07", "s08", "s10", "s12"],
 };
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seedOf(s) { let h = 7; for (const c of s) h = Math.imul(h, 31) + c.charCodeAt(0) | 0; return h; }
+
 // yl: year level in 2026 (0 = Pre-primary). first/last: first and last compulsory round. entry: date of entry assessment.
 // L0: starting level. g: levels gained per six months. gaps: items this student keeps finding hard.
 // split: which room a Year 1 student is in, since Year 1 is split across Rooms 1 and 2.
@@ -490,12 +647,43 @@ const STUDENT_SPECS = [
   { id: "s29", name: "Jacob N.",   yl: 5, type: "standard", first: 0, last: 5, L0: 7,  g: 0.9, gaps: [] },
   { id: "s30", name: "Leah R.",    yl: 6, type: "standard", first: 0, last: 5, L0: 10, g: 1.1, gaps: [] },
   { id: "s31", name: "Zoe K.",     yl: 6, type: "aac",      first: 0, last: 1, L0: 5,  g: 0.9, gaps: [] },
-];
+].map((sp) => ({ ...sp, school: "A" }));
+
+// Schools B and C are generated: a few students at each year level, filling three split classes of 4-6.
+const NAMES = {
+  B: ["Amelia D.", "Jaxon F.", "Willow G.", "Harrison K.", "Ruby-Mae L.", "Kai M.", "Poppy N.", "Levi O.", "Sophie P.",
+      "Charlie Q.", "Ellie R.", "Mason S.", "Frankie T.", "Hudson U.", "Lola V.", "Arlo W.", "Maeve X.", "Beau Y.", "Ivy-Rose Z."],
+  C: ["Olivia A.", "Leo B.", "Isabella C.", "Jack E.", "Charlotte F.", "Henry G.", "Mila H.", "Thomas I.", "Aria J.",
+      "William K.", "Evelyn L.", "Oliver M.", "Hazel N.", "Noah O.", "Georgia P.", "Lachlan Q.", "Billie R.", "Felix S.", "Quinn T."],
+};
+const COHORT = { 0: 3, 1: 4, 2: 3, 3: 3, 4: 2, 5: 2, 6: 2 };
+// Which Year 1 class each student was in (Year 1 is split between Rooms 1 and 2).
+const SPLITS = { 1: ["Room 1", "Room 1", "Room 2", "Room 2"], 2: ["Room 1", "Room 1", "Room 2"], 3: ["Room 1", "Room 2", "Room 2"] };
+["B", "C"].forEach((code) => {
+  const rng = mulberry32(seedOf("school" + code));
+  let k = 0;
+  for (let yl = 0; yl <= 6; yl++) {
+    for (let j = 0; j < COHORT[yl]; j++) {
+      const first = yl === 0 ? 4 : yl === 1 ? 2 : 0;
+      const startYl = yl - (2026 - ROUNDS[first].year);
+      const sp = {
+        id: code.toLowerCase() + String(k + 1).padStart(2, "0"), name: NAMES[code][k], school: code, yl,
+        type: rng() < 0.15 ? "aac" : "standard", first, last: 5,
+        L0: 1 + startYl * 2 + Math.floor(rng() * 3), g: 0.8 + rng() * 0.7,
+        gaps: rng() < 0.3 ? [2 + Math.floor(rng() * 8)] : [],
+        split: SPLITS[yl] ? SPLITS[yl][j] : undefined,
+      };
+      if (yl === 1 && j === 3) { sp.entry = "2025-05-19"; sp.first = 3; }
+      STUDENT_SPECS.push(sp);
+      k++;
+    }
+  }
+});
 
 const ylNum = (st, y) => st.yl - (2026 - y);
 const ylName = (n) => n < 0 ? "Kindergarten" : n === 0 ? "Pre-primary" : "Year " + n;
 function roomOf(st, y) {
-  if (ROOM4[y] && ROOM4[y].includes(st.id)) return "Room 4";
+  if (st.school === "A" && ROOM4[y] && ROOM4[y].includes(st.id)) return "Room 4";
   const n = ylNum(st, y);
   if (n === 0) return "Room 1";
   if (n === 1) return st.split || "Room 2";
@@ -503,19 +691,9 @@ function roomOf(st, y) {
   if (n === 3 || n === 4) return "Room 3";
   return "Another class";
 }
-const roomLabel = (room) => ROOMS[room] ? `${room} · ${ROOMS[room].teacher}` : room;
+const roomLabel = (room, school) => { const r = SCHOOLS[school].rooms[room]; return r ? `${room} · ${r.teacher}` : room; };
 
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function seedOf(s) { let h = 7; for (const c of s) h = Math.imul(h, 31) + c.charCodeAt(0) | 0; return h; }
-
-function genScores(ability, gaps, rng) {
+function genScores(ability, gaps, rng, hard) {
   const s = [];
   let run = 0;
   for (let i = 1; i <= TOTAL_ITEMS; i++) {
@@ -523,7 +701,8 @@ function genScores(ability, gaps, rng) {
     if (i <= ability) {
       v = 100;
       if (run < 2) {
-        if (gaps.includes(i) && rng() < 0.75) v = [60, 70, 80, 90][Math.floor(rng() * 4)];
+        if (hard.includes(i) && rng() < 0.8) v = [50, 60, 70, 80][Math.floor(rng() * 4)];
+        else if (gaps.includes(i) && rng() < 0.75) v = [60, 70, 80, 90][Math.floor(rng() * 4)];
         else if (rng() < 0.04) v = 90;
       }
     } else {
@@ -561,8 +740,10 @@ const STUDENTS = STUDENT_SPECS.map((sp) => {
   const start = +new Date(slots[0].date);
   const assessments = slots.map((sl) => {
     const halfYears = (+new Date(sl.date) - start) / (182 * 864e5);
-    const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * halfYears + rng() * 1.4 - 0.7)));
-    return analyse({ ...sl, cls: roomOf(sp, sl.year), yearLevel: ylNum(sp, sl.year), scores: genScores(ability, sp.gaps, rng) });
+    const sch = SCHOOLS[sp.school];
+    const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * sch.g * halfYears + rng() * 1.4 - 0.7)));
+    const hard = Object.keys(sch.hard).filter((n) => sch.hard[n].includes(sl.year)).map(Number);
+    return analyse({ ...sl, cls: roomOf(sp, sl.year), yearLevel: ylNum(sp, sl.year), scores: genScores(ability, sp.gaps, rng, hard) });
   });
   const byRound = {};
   assessments.forEach((a) => { if (a.round != null) byRound[a.round] = a; });
@@ -656,7 +837,7 @@ function lineChart(el, cfg) {
 
 /* ================= GROUP VIEW (teacher or year group) ================= */
 // mode "teacher": one class, chosen by room. mode "yeargroup": every student at one year level, whatever class they are in.
-const G = { mode: "teacher", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null };
+const G = { mode: "teacher", school: "A", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null, scItem: null };
 const isYG = () => G.mode === "yeargroup";
 const noun = () => isYG() ? "year group" : "class";
 const yearRounds = (y) => ROUNDS.filter((r) => r.year === y);
@@ -664,7 +845,7 @@ const roundLabel = (r) => `${r.term} · ${fmtDate(r.date, "short")}`;
 const inYear = (st, y) => st.assessments.some((a) => a.year === y);
 
 function cohort(y) {
-  return STUDENTS.filter((st) => inYear(st, y) && (isYG() ? ylNum(st, y) === G.yl : roomOf(st, y) === G.room));
+  return STUDENTS.filter((st) => st.school === G.school && inYear(st, y) && (isYG() ? ylNum(st, y) === G.yl : roomOf(st, y) === G.room));
 }
 function roundStats(y) {
   const sts = cohort(y);
@@ -701,16 +882,17 @@ function gainStats(rows) {
 
 function renderPickers() {
   const y = G.year;
+  $("#t-school").innerHTML = Object.entries(SCHOOLS).map(([code, s]) => `<option value="${code}" ${code === G.school ? "selected" : ""}>${s.name}</option>`).join("");
   if (isYG()) {
-    const levels = [...new Set(STUDENTS.filter((st) => inYear(st, y)).map((st) => ylNum(st, y)))].filter((n) => n >= 0).sort((a, b) => a - b);
+    const levels = [...new Set(STUDENTS.filter((st) => st.school === G.school && inYear(st, y)).map((st) => ylNum(st, y)))].filter((n) => n >= 0).sort((a, b) => a - b);
     if (!levels.includes(G.yl)) G.yl = levels[0];
     $("#t-pickLabel").textContent = "Year level";
     $("#t-pick").innerHTML = levels.map((n) => `<option value="${n}" ${n === G.yl ? "selected" : ""}>${ylName(n)}</option>`).join("");
   } else {
-    const rooms = Object.keys(ROOMS).filter((rm) => STUDENTS.some((st) => inYear(st, y) && roomOf(st, y) === rm));
+    const rooms = Object.keys(SCHOOLS[G.school].rooms).filter((rm) => STUDENTS.some((st) => st.school === G.school && inYear(st, y) && roomOf(st, y) === rm));
     if (!rooms.includes(G.room)) G.room = rooms[0];
     $("#t-pickLabel").textContent = "Class";
-    $("#t-pick").innerHTML = rooms.map((rm) => `<option value="${rm}" ${rm === G.room ? "selected" : ""}>${roomLabel(rm)}</option>`).join("");
+    $("#t-pick").innerHTML = rooms.map((rm) => `<option value="${rm}" ${rm === G.room ? "selected" : ""}>${roomLabel(rm, G.school)}</option>`).join("");
   }
   $("#t-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
 }
@@ -726,10 +908,11 @@ function renderGroup() {
   $("#nav-teacher").setAttribute("aria-current", isYG() ? "false" : "page");
   $("#nav-yg").setAttribute("aria-current", isYG() ? "page" : "false");
   $("#t-eyebrow").textContent = `Foundational Skills Assessment · ${isYG() ? "Year group" : "Teacher"} report`;
-  $("#t-title").textContent = isYG() ? `${ylName(G.yl)} · ${y}` : `${roomLabel(G.room)}`;
+  const sch = SCHOOLS[G.school];
+  $("#t-title").textContent = isYG() ? `${ylName(G.yl)} · ${y}` : `${roomLabel(G.room, G.school)}`;
   $("#t-meta").innerHTML = (isYG()
-    ? [SCHOOL, `${sts.length} students across ${rooms.length} ${rooms.length === 1 ? "class" : "classes"}`, "Grouped by each student's year level, not their class"]
-    : [SCHOOL, ROOMS[G.room].setting, `${sts.length} students in ${y}`]
+    ? [sch.name, `${sts.length} students across ${rooms.length} ${rooms.length === 1 ? "class" : "classes"}`, "Grouped by each student's year level, not their class"]
+    : [sch.name, sch.rooms[G.room].setting, `${sts.length} students in ${y}`]
   ).map((t) => `<span>${t}</span>`).join("");
 
   $("#t-stats").innerHTML = [
@@ -747,7 +930,7 @@ function renderGroup() {
       const ch = r.change == null ? `<span class="sub">One assessment</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
       return `<tr data-id="${r.st.id}">
         <td><a href="#${r.st.id}">${r.st.name}</a></td>
-        <td>${isYG() ? roomLabel(roomOf(r.st, y)) : ylName(ylNum(r.st, y))}</td>
+        <td>${isYG() ? roomLabel(roomOf(r.st, y), G.school) : ylName(ylNum(r.st, y))}</td>
         <td><span class="chip ${r.st.type === "aac" ? "aac" : ""}">${typeName(r.st.type)}</span></td>
         <td><div class="lvl" data-tip="${r.st.name}: level ${lvl} of 36"><b class="num">${lvl}</b><div class="track"><div class="fill" style="width:${lvl / 36 * 100}%"></div></div></div></td>
         <td>${ch}</td>
@@ -764,7 +947,7 @@ function renderGroup() {
       rooms.sort().map((rm) => {
         const rr = rows.filter((r) => roomOf(r.st, y) === rm);
         const s = gainStats(rr);
-        const link = ROOMS[rm] ? `<a href="#teacher" data-room="${rm}">${roomLabel(rm)}</a>` : rm;
+        const link = sch.rooms[rm] ? `<a href="#teacher" data-room="${rm}">${roomLabel(rm, G.school)}</a>` : rm;
         return `<tr><td>${link}</td><td class="num">${rr.length}</td><td class="num">${s.avgLevel != null ? r1(s.avgLevel) : "—"}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
       }).join("") + "</tbody>";
   }
@@ -894,6 +1077,7 @@ $("#t-years").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   G.year = +b.dataset.y; renderGroup();
 });
+$("#t-school").addEventListener("change", (e) => { G.school = e.target.value; G.item = null; renderGroup(); });
 $("#t-pick").addEventListener("change", (e) => {
   if (isYG()) G.yl = +e.target.value; else G.room = e.target.value;
   renderGroup();
@@ -909,6 +1093,187 @@ $("#t-byClass").addEventListener("click", (e) => {
   const a = e.target.closest("a[data-room]"); if (a) G.room = a.dataset.room;
 });
 
+/* ================= SCHOOL VIEW ================= */
+// An item is flagged when the school's reach rate is well behind the average across all schools,
+// and only when at least SIG.MIN students at the school were working on it.
+const SIG = { MIN: 3, BELOW: 15, WELL: 30 };
+const SIG_NAME = { ok: "Similar or better", below: "Below", well: "Well below", few: "Too few students" };
+const memo = {};
+function itemRates(code, y) {
+  const key = code + y;
+  if (memo[key]) return memo[key];
+  const out = Array.from({ length: TOTAL_ITEMS }, () => ({ working: 0, reached: 0 }));
+  STUDENTS.filter((st) => code === "ALL" || st.school === code).forEach((st) => {
+    const as = st.assessments.filter((a) => a.year === y);
+    if (as.length < 2) return;
+    const first = as[0], last = as[as.length - 1];
+    [...first.gaps, ...first.stopItems].forEach((n) => {
+      out[n - 1].working++;
+      if (last.scores[n - 1] === 100) out[n - 1].reached++;
+    });
+  });
+  return (memo[key] = out);
+}
+const rate = (c) => c.working ? c.reached / c.working * 100 : null;
+function signal(code, y, n) {
+  const c = itemRates(code, y)[n - 1], b = itemRates("ALL", y)[n - 1];
+  if (c.working < SIG.MIN) return { s: "few", c, b };
+  const diff = rate(c) - rate(b);
+  return { s: diff <= -SIG.WELL ? "well" : diff <= -SIG.BELOW ? "below" : "ok", c, b, diff };
+}
+function progressOf(students, y) {
+  const rows = students.filter((st) => inYear(st, y)).map((st) => ({ st, ...studentYear(st, y) }));
+  return { rows, ...gainStats(rows) };
+}
+const schoolStudents = (code) => STUDENTS.filter((st) => st.school === code);
+const flaggedCount = (code, y) => Array.from({ length: TOTAL_ITEMS }, (_, i) => signal(code, y, i + 1).s).filter((s) => s === "below" || s === "well").length;
+const pctOf = (a, b) => b ? Math.round(a / b * 100) + "%" : "—";
+
+function renderSchool() {
+  const y = G.year, code = G.school, sch = SCHOOLS[code];
+  const sts = schoolStudents(code);
+  const p = progressOf(sts, y), all = progressOf(STUDENTS, y);
+
+  $("#sc-school").innerHTML = Object.entries(SCHOOLS).map(([c, s]) => `<option value="${c}" ${c === code ? "selected" : ""}>${s.name}</option>`).join("");
+  $("#sc-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
+  $("#sc-title").textContent = sch.name;
+  $("#sc-legendSchool").textContent = sch.name;
+  $("#sc-meta").innerHTML = [`${p.rows.length} students assessed in ${y}`, `${Object.keys(sch.rooms).length} classes in this demo`, "Pre-primary to Year 6"].map((t) => `<span>${t}</span>`).join("");
+
+  const flagged = flaggedCount(code, y);
+  $("#sc-stats").innerHTML = [
+    [p.changes.length ? signed(p.avgGain, r1) : "—", `Average levels gained per student in ${y} (all schools ${signed(all.avgGain, r1)})`],
+    [p.changes.length ? pctOf(p.moved, p.changes.length) : "—", `Students who moved up at least one level (all schools ${pctOf(all.moved, all.changes.length)})`],
+    [p.avgLevel != null ? r1(p.avgLevel) : "—", "Average current level"],
+    [flagged, `Items flagged in ${y}`],
+  ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
+
+  // Year by year
+  const yearsData = YEARS.map((yy) => ({ y: yy, p: progressOf(sts, yy), all: progressOf(STUDENTS, yy), flagged: flaggedCount(code, yy) }));
+  drawYearBars();
+  $("#sc-yearTable").innerHTML = `<tr><th>Year</th><th>Students</th><th>Average levels gained</th><th>All schools</th><th>Moved up</th><th>All schools</th><th>Items flagged</th></tr>` +
+    yearsData.map((d) => `<tr><td>${d.y}</td><td>${d.p.rows.length}</td><td>${signed(d.p.avgGain, r1)}</td><td>${signed(d.all.avgGain, r1)}</td><td>${pctOf(d.p.moved, d.p.changes.length)}</td><td>${pctOf(d.all.moved, d.all.changes.length)}</td><td>${d.flagged}</td></tr>`).join("");
+
+  // Signal grid: one row per year, one square per item
+  if (G.scItem == null) {
+    let worst = null;
+    for (let n = 1; n <= TOTAL_ITEMS; n++) { const s = signal(code, y, n); if (s.diff != null && (worst == null || s.diff < worst.diff)) worst = { n, diff: s.diff }; }
+    G.scItem = worst ? worst.n : 1;
+  }
+  let g = `<thead><tr><th></th>${Array.from({ length: TOTAL_ITEMS }, (_, i) => `<th>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ""}</th>`).join("")}</tr></thead><tbody>`;
+  YEARS.forEach((yy) => {
+    g += `<tr><th>${yy}</th>`;
+    for (let n = 1; n <= TOTAL_ITEMS; n++) {
+      const s = signal(code, yy, n);
+      const t = s.s === "few"
+        ? `Item ${n}, ${yy}: ${s.c.working} student${s.c.working === 1 ? "" : "s"} working on it, too few to compare`
+        : `Item ${n}, ${yy}: ${s.c.reached} of ${s.c.working} students reached 100% (${Math.round(rate(s.c))}%). All schools ${Math.round(rate(s.b))}%. ${SIG_NAME[s.s]}.`;
+      g += `<td><div class="sig ${s.s}${n === G.scItem ? " sel" : ""}" data-n="${n}" data-tip="${t}" ${s.s === "few" ? "" : 'tabindex="0" role="button"'}>${s.s === "well" ? "!!" : s.s === "below" ? "!" : ""}</div></td>`;
+    }
+    g += "</tr>";
+  });
+  $("#sc-grid").innerHTML = g + "</tbody>";
+
+  // Watch list for the selected year
+  const watch = [];
+  for (let n = 1; n <= TOTAL_ITEMS; n++) {
+    const s = signal(code, y, n);
+    if (s.s !== "below" && s.s !== "well") continue;
+    const other = YEARS.filter((yy) => yy !== y && ["below", "well"].includes(signal(code, yy, n).s));
+    watch.push({ n, s, other });
+  }
+  watch.sort((a, b) => a.s.diff - b.s.diff);
+  $("#sc-watchTitle").textContent = `Items to look at in ${y}`;
+  $("#sc-watchSub").textContent = `Items where ${sch.name}'s students reached 100% less often than students across all schools. Worst first.`;
+  $("#sc-watch").innerHTML = watch.length ? watch.map((w) =>
+    `<li><span class="tag ${w.s.s === "well" ? "crit" : "warn"}">${SIG_NAME[w.s.s]}</span><span><a href="#school" data-item="${w.n}"><b>Item ${w.n}</b></a>: ${w.s.c.reached} of ${w.s.c.working} students working on it reached 100% (${Math.round(rate(w.s.c))}%). Across all schools: ${Math.round(rate(w.s.b))}%.${w.other.length ? ` Also flagged in ${w.other.join(" and ")}.` : ""}</span></li>`).join("")
+    : `<li><span class="tag info">None</span><span>No items flagged for ${sch.name} in ${y}.</span></li>`;
+
+  // Item detail
+  $("#sc-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === G.scItem ? "selected" : ""}>Item ${i + 1}</option>`).join("");
+  renderItemDetail();
+
+  // Classes and year levels
+  $("#sc-partsSub").textContent = `How each class and year level at ${sch.name} progressed in ${y}. Select one to open its report.`;
+  const roomsHere = Object.keys(sch.rooms).filter((rm) => p.rows.some((r) => roomOf(r.st, y) === rm));
+  $("#sc-classes").innerHTML = `<thead><tr><th>Class</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
+    roomsHere.map((rm) => {
+      const s = gainStats(p.rows.filter((r) => roomOf(r.st, y) === rm));
+      return `<tr><td><a href="#teacher" data-room="${rm}">${roomLabel(rm, code)}</a></td><td class="num">${p.rows.filter((r) => roomOf(r.st, y) === rm).length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
+    }).join("") + "</tbody>";
+  const levels = [...new Set(p.rows.map((r) => ylNum(r.st, y)))].sort((a, b) => a - b);
+  $("#sc-levels").innerHTML = `<thead><tr><th>Year level</th><th>Students</th><th>Levels gained</th><th>Moved up</th></tr></thead><tbody>` +
+    levels.map((n) => {
+      const rr = p.rows.filter((r) => ylNum(r.st, y) === n);
+      const s = gainStats(rr);
+      return `<tr><td><a href="#yeargroup" data-yl="${n}">${ylName(n)}</a></td><td class="num">${rr.length}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+function drawYearBars() {
+  const el = $("#sc-yearChart");
+  const code = G.school;
+  const data = YEARS.map((yy) => ({ y: yy, v: progressOf(schoolStudents(code), yy).avgGain, b: progressOf(STUDENTS, yy).avgGain }));
+  const W = Math.max(300, el.clientWidth), H = 210;
+  const m = { t: 26, r: 16, b: 30, l: 40 };
+  const yMax = Math.max(1, Math.ceil(Math.max(...data.map((d) => Math.max(d.v || 0, d.b || 0))) + 0.4));
+  const y = (v) => H - m.b - v / yMax * (H - m.t - m.b);
+  const slot = (W - m.l - m.r) / data.length, bw = Math.min(72, slot * 0.45);
+  let s = "";
+  for (let v = 0; v <= yMax; v++) {
+    s += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    s += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${v ? "+" + v : 0}</text>`;
+  }
+  data.forEach((d, i) => {
+    const cx = m.l + slot * (i + 0.5);
+    s += `<rect x="${cx - bw / 2}" y="${y(d.v)}" width="${bw}" height="${y(0) - y(d.v)}" rx="4" fill="var(--accent)"/>`;
+    s += `<text x="${cx}" y="${Math.min(y(d.v), y(d.b)) - 8}" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${signed(d.v, r1)}</text>`;
+    s += `<line x1="${cx - bw / 2 - 8}" x2="${cx + bw / 2 + 8}" y1="${y(d.b)}" y2="${y(d.b)}" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>`;
+    s += `<text class="axis-text" x="${cx}" y="${H - 8}" text-anchor="middle">${d.y}</text>`;
+    s += `<rect class="bar-hit" x="${cx - slot / 2}" y="${m.t}" width="${slot}" height="${H - m.t - m.b}" data-tip="${d.y}: ${SCHOOLS[code].name} ${signed(d.v, r1)} levels per student. All schools ${signed(d.b, r1)}."/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg>`;
+}
+
+function renderItemDetail() {
+  const code = G.school, n = G.scItem;
+  const row = (cls, label, c) => {
+    const r = rate(c);
+    return `<div class="cmp-row ${cls}"><span class="who-lbl">${label}</span><div class="track"><div class="fill" style="width:${r == null ? 0 : r}%"></div></div><span class="val">${r == null ? "No students" : `${Math.round(r)}% (${c.reached} of ${c.working})`}</span></div>`;
+  };
+  $("#sc-itemBars").innerHTML = YEARS.map((yy) => {
+    const s = signal(code, yy, n);
+    const note = s.s === "few" ? `<span class="sub">Fewer than 3 students at ${SCHOOLS[code].name} were working on item ${n} in ${yy}, so it isn't compared.</span>` : "";
+    const tag = s.s === "below" || s.s === "well" ? ` <span class="status" style="${s.s === "well" ? "background:var(--crit);color:var(--on-crit)" : "background:var(--warn-soft);color:var(--warn)"}">${SIG_NAME[s.s]}</span>` : "";
+    return `<div class="cmp-year"><b>${yy}</b><div class="cmp-rows">${row("school", SCHOOLS[code].name + tag, s.c)}${row("bench", "All schools", s.b)}${note}</div></div>`;
+  }).join("");
+  $("#sc-grid").querySelectorAll(".sig").forEach((c) => c.classList.toggle("sel", +c.dataset.n === n));
+  $("#sc-itemTitle").textContent = `Item ${n} year by year`;
+}
+
+$("#sc-school").addEventListener("change", (e) => { G.school = e.target.value; G.scItem = null; renderSchool(); });
+$("#sc-years").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  G.year = +b.dataset.y; G.scItem = null; renderSchool();
+});
+$("#sc-itemSel").addEventListener("change", (e) => { G.scItem = +e.target.value; renderItemDetail(); });
+function pickSig(e) {
+  const c = e.target.closest(".sig:not(.few)"); if (!c) return;
+  G.scItem = +c.dataset.n; $("#sc-itemSel").value = G.scItem; renderItemDetail();
+}
+$("#sc-grid").addEventListener("click", pickSig);
+$("#sc-grid").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickSig(e); } });
+$("#sc-watch").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-item]"); if (!a) return;
+  e.preventDefault();
+  G.scItem = +a.dataset.item; $("#sc-itemSel").value = G.scItem; renderItemDetail();
+  $("#sc-itemTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+$("#schoolView").addEventListener("click", (e) => {
+  const r = e.target.closest("a[data-room]"); if (r) G.room = r.dataset.room;
+  const l = e.target.closest("a[data-yl]"); if (l) G.yl = +l.dataset.yl;
+});
+
 /* ================= STUDENT VIEW ================= */
 const S = { st: null, A: [], latest: null, metric: "total", sel: 0, showAll: false };
 
@@ -918,11 +1283,11 @@ function renderStudent(st) {
   const A = S.A, latest = S.latest, prev = A[A.length - 2];
   $("#s-name").textContent = st.name;
   $("#s-typeBadge").textContent = typeName(st.type);
-  $("#s-back").href = isYG() ? "#yeargroup" : "#teacher";
-  $("#s-back").textContent = isYG() ? `← ${ylName(G.yl)} (${G.year})` : `← ${roomLabel(G.room)} (${G.year})`;
+  $("#s-back").href = "#" + G.mode;
+  $("#s-back").textContent = "← " + (G.mode === "school" ? SCHOOLS[G.school].name : isYG() ? ylName(G.yl) : roomLabel(G.room, G.school)) + ` (${G.year})`;
   $("#s-meta").innerHTML = [
-    ylName(ylNum(st, latest.year)), SCHOOL,
-    `${latest.year === 2026 ? "Current class" : "Last class"}: ${roomLabel(roomOf(st, latest.year))}`,
+    ylName(ylNum(st, latest.year)), SCHOOLS[st.school].name,
+    `${latest.year === 2026 ? "Current class" : "Last class"}: ${roomLabel(roomOf(st, latest.year), st.school)}`,
     `${A.length} assessments since ${fmtDate(A[0].date)}`,
   ].map((t) => `<span>${t}</span>`).join("");
 
@@ -1061,19 +1426,21 @@ $("#s-mTotal").onclick = () => { S.metric = "total"; $("#s-mTotal").setAttribute
 $("#s-mLevel").onclick = () => { S.metric = "level"; $("#s-mLevel").setAttribute("aria-pressed", true); $("#s-mTotal").setAttribute("aria-pressed", false); drawStudentLine(); };
 
 /* ================= ROUTING ================= */
-// #teacher, #yeargroup, or a student id such as #s07.
+// #teacher, #yeargroup, #school, or a student id such as #s07.
 function route() {
   const h = location.hash.slice(1);
   const st = BY_ID[h];
   tip.hidden = true;
   if (!st) {
-    const mode = h === "yeargroup" ? "yeargroup" : "teacher";
+    const mode = h === "yeargroup" || h === "school" ? h : "teacher";
     if (mode !== G.mode) G.item = null;
     G.mode = mode;
   }
-  $("#teacherView").hidden = !!st;
+  const isSchool = G.mode === "school";
+  $("#teacherView").hidden = !!st || isSchool;
+  $("#schoolView").hidden = !!st || !isSchool;
   $("#studentView").hidden = !st;
-  if (st) renderStudent(st); else renderGroup();
+  if (st) renderStudent(st); else if (isSchool) renderSchool(); else renderGroup();
   window.scrollTo(0, 0);
 }
 addEventListener("hashchange", route);
@@ -1082,7 +1449,8 @@ let rt;
 addEventListener("resize", () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
-    if (S.st && !$("#studentView").hidden) drawStudentLine();
+    if (!$("#studentView").hidden) drawStudentLine();
+    else if (!$("#schoolView").hidden) drawYearBars();
     else { drawGroupProg(); drawItem(); drawChanges(); }
   }, 120);
 });
