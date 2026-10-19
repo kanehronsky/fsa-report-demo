@@ -1,10 +1,10 @@
 <!doctype html><html lang="en-AU"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FSA Student Report</title>
+<title>FSA Reports</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;700&display=swap">
 <style>
-/* Layout: one reading column of report panels; summary first, then progress, item detail, suggested extras. */
+/* Layout: one reading column of report panels. Teacher view first; each student opens in the same page. */
 :root {
   --bg: #F2F5F5;
   --surface: #FFFFFF;
@@ -47,11 +47,16 @@ body {
 h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
 p { margin: 0; }
+a { color: var(--accent); }
 .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* Header */
+.crumbs { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--muted); }
+.crumbs a { font-weight: 700; text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
 .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
 .head .who { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-2); font-size: 14px; }
@@ -62,6 +67,7 @@ p { margin: 0; }
 @media (max-width: 720px) { .head-tools { align-items: flex-start; } }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); white-space: nowrap; }
 .chip.suggest { color: var(--suggest); background: var(--suggest-soft); border-color: transparent; }
+.chip.aac { color: var(--accent); border-color: var(--accent); }
 
 /* Panels */
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -93,37 +99,61 @@ p { margin: 0; }
 .seg button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: var(--surface); color: var(--ink-2); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
-button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg-lg button { font-size: 15px; padding: 8px 18px; }
+button:focus-visible, [tabindex]:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
 .check input { accent-color: var(--accent); }
+.field { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 700; }
+select { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 
-/* Line chart */
-#lineChart { width: 100%; min-height: 220px; }
-#lineChart svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* Charts */
+.chart { width: 100%; min-height: 200px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .axis-text { fill: var(--muted); font-size: 12px; font-family: var(--font-body); }
 .grid-line { stroke: var(--line); stroke-width: 1; }
+.zero-line { stroke: var(--muted); stroke-width: 1; }
 .pt-hit { fill: transparent; cursor: pointer; }
+.bar-hit { fill: transparent; cursor: pointer; }
 details.table-view summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
 .tbl-wrap { overflow-x: auto; }
 table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
 th, td { padding: 6px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
-
-/* Bar chart */
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
 .legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.lg-line { width: 18px !important; height: 0 !important; border-top: 3px solid var(--accent); border-radius: 0 !important; vertical-align: 3px !important; }
+.lg-ghost { width: 18px !important; height: 0 !important; border-top: 2px dashed var(--muted); border-radius: 0 !important; vertical-align: 3px !important; }
 .lg-full { background: var(--accent); }
 .lg-part { background: var(--accent-soft); }
 .lg-stop { background: var(--stop); }
 .lg-none { border: 1px dashed var(--muted); }
 .lg-prev { width: 2px !important; height: 14px !important; background: var(--ink); border-radius: 0 !important; vertical-align: -3px !important; }
+.summary-line { font-size: 14px; color: var(--ink); }
+.summary-line b { font-variant-numeric: tabular-nums; }
+.subhead { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* Class list */
+.class-table { width: 100%; }
+.class-table tbody tr { cursor: pointer; }
+.class-table tbody tr:hover { background: var(--track); }
+.class-table td { padding: 10px 12px; vertical-align: middle; }
+.class-table a { font-weight: 700; text-decoration: none; }
+.class-table a:hover { text-decoration: underline; }
+.lvl { display: flex; align-items: center; gap: 10px; }
+.lvl b { font-family: var(--font-display); font-size: 18px; min-width: 22px; text-align: right; }
+.lvl .track { width: 120px; }
+.delta-up { color: var(--accent); font-weight: 700; }
+.delta-flat { color: var(--stop); font-weight: 700; }
+.status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--stop-soft); color: var(--stop); }
+
+/* Item bars (student) */
 .bars { display: flex; flex-direction: column; gap: 3px; }
 .bar-row { display: grid; grid-template-columns: 64px 1fr 52px; align-items: center; gap: 10px; font-size: 13px; padding: 1px 0; border-radius: 4px; }
 .bar-row:hover { background: var(--track); }
 .bar-label { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .track { position: relative; height: 14px; background: var(--track); border-radius: 0 4px 4px 0; }
 .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-soft); border-radius: 0 4px 4px 0; }
-.bar-row.full .fill { background: var(--accent); }
+.lvl .fill, .bar-row.full .fill { background: var(--accent); }
 .bar-row.stop .fill { background: var(--stop); }
 .bar-row.none .track { background: transparent; border: 1px dashed var(--line); }
 .bar-row.none .bar-label, .bar-row.none .bar-val { color: var(--muted); }
@@ -140,53 +170,163 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .heat td, .heat th { text-align: center; padding: 0; border: 0; }
 .heat th { padding: 4px 6px; font-weight: 700; }
 .heat th.rowh { text-align: right; padding-right: 10px; color: var(--ink-2); font-weight: 400; }
-.heat td div { margin: 2px; width: 72px; height: 26px; display: grid; place-items: center; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.heat td div { margin: 2px; width: 64px; height: 26px; display: grid; place-items: center; border-radius: 4px; font-size: 12px; font-weight: 700; }
 .heat td div.nr { color: var(--muted); font-weight: 400; background: transparent; border: 1px dashed var(--line); }
 .heat td div.st { outline: 2px solid var(--stop); outline-offset: -2px; }
 
-/* Stats & flags */
+/* Stats, flags, shared targets */
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stats.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
 .stat .v { font-family: var(--font-display); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat .k { font-size: 13px; color: var(--ink-2); }
 .flags { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .flags li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 14px; }
 .flags .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--stop-soft); color: var(--stop); white-space: nowrap; }
 .flags .tag.info { background: var(--track); color: var(--ink-2); }
+.shared { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.shared li { display: grid; grid-template-columns: 76px 90px 1fr; gap: 10px; align-items: center; font-size: 14px; }
+.shared .it { font-family: var(--font-display); font-weight: 600; }
+.shared .cnt { color: var(--ink-2); font-size: 13px; }
+.names { display: flex; flex-wrap: wrap; gap: 6px; }
+.names a { font-size: 13px; font-weight: 700; text-decoration: none; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); }
+.names a:hover { border-color: var(--accent); }
 
 .notes { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 4px; max-width: 70ch; }
 
-#tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 13px; padding: 6px 10px; border-radius: 6px; max-width: 240px; line-height: 1.35; }
+#tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 13px; padding: 6px 10px; border-radius: 6px; max-width: 260px; line-height: 1.35; }
 
 @media (max-width: 720px) {
   .hero { grid-template-columns: 1fr; }
-  .stats { grid-template-columns: 1fr; }
+  .stats, .stats.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   h1 { font-size: 24px; }
   .bar-row { grid-template-columns: 54px 1fr 44px; gap: 8px; }
+  .shared li { grid-template-columns: 64px 1fr; }
+  .shared .names { grid-column: 1 / -1; }
+  .lvl .track { width: 70px; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .fill { transition: width 0.35s ease; }
+  .bar-row .fill { transition: width 0.35s ease; }
 }
 </style>
 
-<div class="wrap">
+<!-- ============ TEACHER VIEW ============ -->
+<div class="wrap" id="teacherView">
   <header class="head">
     <div class="who">
-      <span class="eyebrow">Foundational Skills Assessment · Student report</span>
-      <h1>Sample Student</h1>
-      <div class="meta" id="meta"></div>
+      <span class="eyebrow">Foundational Skills Assessment · Teacher report</span>
+      <h1>Room 4 · Example Teacher</h1>
+      <div class="meta" id="t-meta"></div>
     </div>
     <div class="head-tools">
       <span class="chip">Wireframe · demo data only</span>
-      <div class="type-badge"><span>Assessment type</span><strong id="typeBadge">Standard</strong></div>
+      <div class="seg seg-lg" role="group" aria-label="School year" id="t-years"></div>
+    </div>
+  </header>
+
+  <section class="stats four" id="t-stats" aria-label="Class summary"></section>
+
+  <section class="panel" aria-labelledby="t-listTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-listTitle">Students</h2>
+        <p class="sub">Select a student to open their full report.</p>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="class-table" id="t-students"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="t-progTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-progTitle">Class progress</h2>
+        <p class="sub" id="t-progSub"></p>
+      </div>
+      <div class="seg" role="group" aria-label="Measure">
+        <button type="button" id="t-mTotal" aria-pressed="true">Average total %</button>
+        <button type="button" id="t-mLevel" aria-pressed="false">Average level</button>
+      </div>
+    </div>
+    <div class="legend" id="t-progLegend"></div>
+    <div class="chart" id="t-prog" role="img" aria-label="Line chart of the class average at each assessment round"></div>
+    <details class="table-view">
+      <summary>Show as a table</summary>
+      <div class="tbl-wrap"><table id="t-progTable"></table></div>
+    </details>
+  </section>
+
+  <section class="panel" aria-labelledby="t-itemTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-itemTitle">Item progress</h2>
+        <p class="sub">The class average on one assessment item at each round. Items a student hasn't reached count as 0%.</p>
+      </div>
+      <label class="field" for="t-itemSel">Item <select id="t-itemSel"></select></label>
+    </div>
+    <div class="legend" id="t-itemLegend"></div>
+    <div class="chart" id="t-item" role="img" aria-label="Line chart of the class average on the selected item"></div>
+    <p class="summary-line" id="t-itemSummary"></p>
+    <div class="subhead">
+      <div class="panel-head">
+        <div class="titles">
+          <h3>Change on every item this year</h3>
+          <p class="sub" id="t-changeSub">From the first round to the latest. Select a bar to see that item above.</p>
+        </div>
+        <span class="chip suggest">Suggested</span>
+      </div>
+    </div>
+    <div class="chart" id="t-change" role="img" aria-label="Bar chart of the change in class average on each item"></div>
+  </section>
+
+  <section class="panel is-suggest" aria-labelledby="t-sharedTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-sharedTitle">Shared teaching targets</h2>
+        <p class="sub">Items that are a teaching target for more than one student right now. These are good candidates for small-group teaching.</p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <ul class="shared" id="t-shared"></ul>
+  </section>
+
+  <section class="panel is-suggest" aria-labelledby="t-flagTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-flagTitle">To follow up</h2>
+        <p class="sub">Students who missed the latest round, or haven't moved up a level this year.</p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <ul class="flags" id="t-flags"></ul>
+  </section>
+
+  <footer class="notes">
+    <p><b>How the numbers are worked out.</b> Class averages include every student in the class who was assessed in that round. Items a student hasn't reached count as 0%, the same as in the student report.</p>
+    <p>The dashed line shows this teacher's class from the year before. It may be different students, so use it as a rough guide only.</p>
+    <p>Sections marked “Suggested” are ideas added to the original brief.</p>
+  </footer>
+</div>
+
+<!-- ============ STUDENT VIEW ============ -->
+<div class="wrap" id="studentView" hidden>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="#class" id="s-back">← Room 4 class</a></nav>
+  <header class="head">
+    <div class="who">
+      <span class="eyebrow">Foundational Skills Assessment · Student report</span>
+      <h1 id="s-name">Student</h1>
+      <div class="meta" id="s-meta"></div>
+    </div>
+    <div class="head-tools">
+      <span class="chip">Wireframe · demo data only</span>
+      <div class="type-badge"><span>Assessment type</span><strong id="s-typeBadge">Standard</strong></div>
     </div>
   </header>
 
   <section class="panel hero" aria-label="Current level">
     <div class="level">
-      <span class="eyebrow" id="levelEyebrow">Student's current level</span>
-      <div class="big"><b class="num" id="levelNum">11</b>of 36 items</div>
-      <span class="delta" id="levelDelta"></span>
+      <span class="eyebrow" id="s-levelEyebrow">Student's current level</span>
+      <div class="big"><b class="num" id="s-levelNum"></b>of 36 items</div>
+      <span class="delta" id="s-levelDelta"></span>
     </div>
     <div class="side">
       <div class="panel-head">
@@ -194,36 +334,36 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
         <span class="chip suggest">Suggested</span>
       </div>
       <p class="sub">Every item below 100% in the latest assessment. Gaps are items below the student's level. Stop points are the three items in a row that ended the assessment.</p>
-      <div class="targets" id="targets"></div>
-      <div class="facts" id="facts"></div>
+      <div class="targets" id="s-targets"></div>
+      <div class="facts" id="s-facts"></div>
     </div>
   </section>
 
-  <section class="panel" aria-labelledby="progTitle">
+  <section class="panel" aria-labelledby="s-progTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="progTitle">Progress over time</h2>
-        <p class="sub" id="progSub">Total assessment score at each assessment. Select a point to see its item scores below.</p>
+        <h2 id="s-progTitle">Progress over time</h2>
+        <p class="sub" id="s-progSub"></p>
       </div>
       <div class="seg" role="group" aria-label="Measure">
-        <button type="button" id="mTotal" aria-pressed="true">Total %</button>
-        <button type="button" id="mLevel" aria-pressed="false">Level (suggested)</button>
+        <button type="button" id="s-mTotal" aria-pressed="true">Total %</button>
+        <button type="button" id="s-mLevel" aria-pressed="false">Level (suggested)</button>
       </div>
     </div>
-    <div id="lineChart" role="img" aria-label="Line chart of the student's assessment results over time"></div>
+    <div class="chart" id="s-line" role="img" aria-label="Line chart of the student's assessment results over time"></div>
     <details class="table-view">
       <summary>Show as a table</summary>
-      <div class="tbl-wrap"><table id="progTable"></table></div>
+      <div class="tbl-wrap"><table id="s-progTable"></table></div>
     </details>
   </section>
 
-  <section class="panel" aria-labelledby="itemTitle">
+  <section class="panel" aria-labelledby="s-itemTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="itemTitle">Item scores</h2>
-        <p class="sub" id="itemSub"></p>
+        <h2 id="s-itemTitle">Item scores</h2>
+        <p class="sub" id="s-itemSub"></p>
       </div>
-      <div class="seg" role="group" aria-label="Assessment date" id="datePick"></div>
+      <div class="seg" role="group" aria-label="Assessment date" id="s-datePick"></div>
     </div>
     <div class="panel-head">
       <div class="legend">
@@ -231,62 +371,115 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
         <span><i class="lg-part"></i>Below 100%</span>
         <span><i class="lg-stop"></i>Stop point (3 in a row below 100%)</span>
         <span><i class="lg-none"></i>Not reached</span>
-        <span id="prevLegend" hidden><i class="lg-prev"></i>Previous assessment</span>
+        <span id="s-prevLegend" hidden><i class="lg-prev"></i>Previous assessment</span>
       </div>
-      <label class="check"><input type="checkbox" id="showPrev" checked> Compare with previous <span class="chip suggest">Suggested</span></label>
+      <label class="check"><input type="checkbox" id="s-showPrev" checked> Compare with previous <span class="chip suggest">Suggested</span></label>
     </div>
-    <div class="bars" id="bars"></div>
-    <button type="button" class="more" id="moreBtn"></button>
+    <div class="bars" id="s-bars"></div>
+    <button type="button" class="more" id="s-moreBtn"></button>
   </section>
 
-  <section class="panel is-suggest" aria-labelledby="sumTitle">
+  <section class="panel is-suggest" aria-labelledby="s-sumTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="sumTitle">At a glance</h2>
+        <h2 id="s-sumTitle">At a glance</h2>
         <p class="sub">Quick numbers and things worth a closer look.</p>
       </div>
       <span class="chip suggest">Suggested</span>
     </div>
-    <div class="stats" id="stats"></div>
-    <ul class="flags" id="flags"></ul>
+    <div class="stats" id="s-stats"></div>
+    <ul class="flags" id="s-flags"></ul>
   </section>
 
-  <section class="panel is-suggest" aria-labelledby="heatTitle">
+  <section class="panel is-suggest" aria-labelledby="s-heatTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="heatTitle">Item history</h2>
+        <h2 id="s-heatTitle">Item history</h2>
         <p class="sub">Every item reached, at every assessment. Darker means a higher score. An orange outline marks where that assessment stopped.</p>
       </div>
       <span class="chip suggest">Suggested</span>
     </div>
-    <div class="tbl-wrap"><table class="heat" id="heat"></table></div>
+    <div class="tbl-wrap"><table class="heat" id="s-heat"></table></div>
   </section>
 
   <footer class="notes">
     <p><b>How the numbers are worked out.</b> Total % is the sum of all 36 item scores divided by 3,600. Items not reached count as 0, so the total rises as the student gets further through the assessment.</p>
     <p>Current level is the last item scored at 100% before the three items in a row that stopped the assessment.</p>
-    <p>There are two versions of the assessment, Standard and AAC. A student starts on one and stays on it, so the report shows one version only. The label at the top says which.</p>
-    <p>Sections marked “Suggested” are ideas added to the original brief.</p>
+    <p>There are two versions of the assessment, Standard and AAC. A student starts on one and stays on it. The label at the top says which.</p>
   </footer>
 </div>
 <div id="tip" hidden></div>
 
 <script>
-const STUDENT = { year: "Year 3", school: "Example Primary School", setting: "Mainstream primary", assessmentType: "standard" };
+/* ---------- Demo data ---------- */
 const TOTAL_ITEMS = 36;
-const DATA = {
-  standard: [
-    { date: "2025-02-17", scores: [100,100,100,100,100,80,100,60,40,20] },
-    { date: "2025-08-18", scores: [100,100,100,100,100,100,100,90,100,70,50,30] },
-    { date: "2026-02-16", scores: [100,100,100,100,100,80,100,100,100,100,90,60,30] },
-    { date: "2026-08-17", scores: [100,100,100,100,100,90,100,100,100,100,100,80,60,40] },
-  ],
-  aac: [
-    { date: "2025-05-12", scores: [100,100,100,100,70,40,20] },
-    { date: "2025-11-10", scores: [100,100,100,100,100,90,100,70,50,40] },
-    { date: "2026-05-11", scores: [100,100,100,100,100,100,100,80,100,90,60,30] },
-  ],
+const ROUNDS = [
+  { id: 0, year: 2024, term: "Term 1", date: "2024-02-19" },
+  { id: 1, year: 2024, term: "Term 2", date: "2024-06-17" },
+  { id: 2, year: 2024, term: "Term 4", date: "2024-10-21" },
+  { id: 3, year: 2025, term: "Term 1", date: "2025-02-17" },
+  { id: 4, year: 2025, term: "Term 2", date: "2025-06-16" },
+  { id: 5, year: 2025, term: "Term 4", date: "2025-10-20" },
+  { id: 6, year: 2026, term: "Term 1", date: "2026-02-16" },
+  { id: 7, year: 2026, term: "Term 2", date: "2026-06-15" },
+  { id: 8, year: 2026, term: "Term 4", date: "2026-10-12" },
+];
+const TEACHER = {
+  name: "Example Teacher", room: "Room 4", school: "Example Primary School", setting: "Education support class",
+  classes: {
+    2024: ["s01", "s02", "s03", "s04", "s05", "s06"],
+    2025: ["s01", "s02", "s03", "s04", "s07", "s08", "s09"],
+    2026: ["s01", "s03", "s07", "s08", "s09", "s10", "s11", "s12"],
+  },
 };
+// yl: year level in 2026. first/last: first and last round in the program. L0: starting level. g: levels per round.
+// gaps: items this student keeps finding hard. miss: rounds they were not assessed.
+const STUDENT_SPECS = [
+  { id: "s01", name: "Mia T.",   yl: 4, type: "standard", first: 0, last: 8, L0: 6,  g: 0.7, gaps: [4] },
+  { id: "s02", name: "Noah R.",  yl: 5, type: "standard", first: 0, last: 8, L0: 9,  g: 0.5, gaps: [7] },
+  { id: "s03", name: "Leo K.",   yl: 3, type: "aac",      first: 1, last: 8, L0: 3,  g: 0.45, gaps: [2] },
+  { id: "s04", name: "Ruby S.",  yl: 5, type: "standard", first: 0, last: 8, L0: 12, g: 0.9, gaps: [] },
+  { id: "s05", name: "Zara P.",  yl: 4, type: "standard", first: 0, last: 2, L0: 8,  g: 0.8, gaps: [6] },
+  { id: "s06", name: "Eli W.",   yl: 4, type: "aac",      first: 0, last: 2, L0: 2,  g: 0.4, gaps: [] },
+  { id: "s07", name: "Isla B.",  yl: 2, type: "standard", first: 3, last: 8, L0: 4,  g: 0.8, gaps: [3, 9] },
+  { id: "s08", name: "Jack D.",  yl: 3, type: "standard", first: 3, last: 8, L0: 7,  g: 0.15, gaps: [5], miss: [8] },
+  { id: "s09", name: "Aria N.",  yl: 2, type: "aac",      first: 4, last: 8, L0: 2,  g: 0.6, gaps: [] },
+  { id: "s10", name: "Theo H.",  yl: 4, type: "standard", first: 2, last: 8, L0: 10, g: 0.7, gaps: [11] },
+  { id: "s11", name: "Lily F.",  yl: 1, type: "standard", first: 5, last: 8, L0: 3,  g: 1.0, gaps: [] },
+  { id: "s12", name: "Ollie M.", yl: 1, type: "standard", first: 7, last: 8, L0: 2,  g: 0.9, gaps: [] },
+];
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seedOf(s) { let h = 7; for (const c of s) h = Math.imul(h, 31) + c.charCodeAt(0) | 0; return h; }
+
+function genScores(ability, gaps, rng) {
+  const s = [];
+  let run = 0;
+  for (let i = 1; i <= TOTAL_ITEMS; i++) {
+    let v;
+    if (i <= ability) {
+      v = 100;
+      if (run < 2) {
+        if (gaps.includes(i) && rng() < 0.75) v = [60, 70, 80, 90][Math.floor(rng() * 4)];
+        else if (rng() < 0.04) v = 90;
+      }
+    } else {
+      const k = i - ability;
+      v = Math.max(0, Math.min(90, Math.round((95 - 22 * k + (rng() * 20 - 10)) / 10) * 10));
+    }
+    s.push(v);
+    run = v < 100 ? run + 1 : 0;
+    if (run === 3) break;
+  }
+  return s;
+}
 
 function analyse(a) {
   const s = a.scores;
@@ -304,40 +497,40 @@ function analyse(a) {
   return { ...a, level, total, stopItems, gaps, reached: s.length };
 }
 
-const $ = (q) => document.querySelector(q);
-const fmtDate = (d, short) => new Date(d + "T00:00:00").toLocaleDateString("en-AU",
-  short ? { month: "short", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
-const pct = (v) => (Math.round(v * 10) / 10).toFixed(1) + "%";
-let A = [], latest = null;
-const state = { type: "standard", metric: "total", sel: 0, showAll: false };
-const typeName = () => state.type === "aac" ? "AAC" : "Standard";
-
-/* Header and hero */
-function renderHero() {
-$("#meta").innerHTML = [
-  STUDENT.year, STUDENT.school, STUDENT.setting,
-  `${A.length} assessments since ${fmtDate(A[0].date)}`,
-].map((t) => "<span>" + t + "</span>").join("");
-
-const prev = A[A.length - 2];
-$("#levelEyebrow").textContent = `Student's current level (${typeName()})`;
-$("#levelNum").textContent = latest.level;
-const dl = prev ? latest.level - prev.level : 0;
-$("#levelDelta").textContent = (prev
-  ? (dl > 0 ? "Up " + dl : dl < 0 ? "Down " + -dl : "No change") + " since " + fmtDate(prev.date)
-  : "First assessment") + " · assessed " + fmtDate(latest.date);
-$("#targets").innerHTML =
-  latest.gaps.map((n) =>
-    `<div class="target gap"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Gap below level</span></div>`).join("") +
-  latest.stopItems.map((n) =>
-    `<div class="target"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Stop point</span></div>`).join("");
-$("#facts").innerHTML =
-  `<span>Latest total <b class="num">${pct(latest.total)}</b></span>` +
-  `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
-  `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
+function teacherFor(id, year) {
+  return TEACHER.classes[year] && TEACHER.classes[year].includes(id) ? TEACHER.room : "Another class";
 }
 
-/* Tooltip */
+const STUDENTS = STUDENT_SPECS.map((sp) => {
+  const rng = mulberry32(seedOf(sp.id));
+  const assessments = [];
+  for (let r = sp.first; r <= sp.last; r++) {
+    const noise = rng() * 1.4 - 0.7;
+    if (sp.miss && sp.miss.includes(r)) continue;
+    const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * (r - sp.first) + noise)));
+    const rd = ROUNDS[r];
+    assessments.push(analyse({ round: r, date: rd.date, year: rd.year, term: rd.term, cls: teacherFor(sp.id, rd.year), scores: genScores(ability, sp.gaps, rng) }));
+  }
+  const byRound = {};
+  assessments.forEach((a) => { byRound[a.round] = a; });
+  return { ...sp, assessments, byRound };
+});
+const BY_ID = Object.fromEntries(STUDENTS.map((s) => [s.id, s]));
+const YEARS = Object.keys(TEACHER.classes).map(Number);
+
+/* ---------- Helpers ---------- */
+const $ = (q) => document.querySelector(q);
+const fmtDate = (d, opt) => new Date(d + "T00:00:00").toLocaleDateString("en-AU",
+  opt === "short" ? { month: "short", year: "2-digit" } : opt === "month" ? { month: "short", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
+const pct = (v) => (Math.round(v * 10) / 10).toFixed(1) + "%";
+const avg = (xs) => xs.length ? xs.reduce((t, v) => t + v, 0) / xs.length : null;
+const r1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
+const signed = (v, f = (x) => x) => (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v));
+const yearLevel = (st, year) => { const n = st.yl - (2026 - year); return n <= 0 ? "Foundation" : "Year " + n; };
+const typeName = (t) => t === "aac" ? "AAC" : "Standard";
+function niceMax(v, step) { return Math.ceil((v + step * 0.5) / step) * step; }
+
+/* ---------- Tooltip ---------- */
 const tip = $("#tip");
 function showTip(el, x, y) {
   tip.textContent = el.getAttribute("data-tip");
@@ -359,81 +552,327 @@ document.addEventListener("focusin", (e) => {
 });
 document.addEventListener("focusout", () => { tip.hidden = true; });
 
-/* Line chart */
-function niceMax(v, step) { return Math.ceil((v + step * 0.5) / step) * step; }
-function drawLine() {
-  const el = $("#lineChart");
-  const W = Math.max(300, el.clientWidth), H = W < 520 ? 230 : 280;
-  const m = { t: 28, r: 56, b: 34, l: 44 };
-  const isTotal = state.metric === "total";
-  const vals = A.map((a) => isTotal ? a.total : a.level);
-  const step = isTotal ? 10 : 2;
-  const maxV = niceMax(Math.max(...vals), step);
-  const ts = A.map((a) => +new Date(a.date));
-  const t0 = ts[0], t1 = ts[ts.length - 1];
-  const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
-  const y = (v) => H - m.b - v / maxV * (H - m.t - m.b);
+/* ---------- Line chart (shared) ---------- */
+// cfg: xs, xLabels, series [{vals, ghost}], yMax, yStep, yFmt, endFmt, tip(i), sel, onPick(i)
+function lineChart(el, cfg) {
+  const W = Math.max(300, el.clientWidth), H = W < 520 ? 230 : 270;
+  const m = { t: 24, r: 64, b: 34, l: 46 };
+  const n = cfg.xs.length;
+  const x0 = Math.min(...cfg.xs), span = (Math.max(...cfg.xs) - x0) || 1;
+  const pw = W - m.l - m.r;
+  const x = (v) => n === 1 ? m.l + pw / 2 : m.l + (v - x0) / span * pw;
+  const y = (v) => H - m.b - v / cfg.yMax * (H - m.t - m.b);
   let g = "";
-  for (let v = 0; v <= maxV; v += step) {
+  for (let v = 0; v <= cfg.yMax + 1e-9; v += cfg.yStep) {
     g += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
-    g += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${v}${isTotal ? "%" : ""}</text>`;
+    g += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${cfg.yFmt(v)}</text>`;
   }
-  A.forEach((a, i) => {
-    const anchor = i === 0 ? "start" : i === A.length - 1 ? "end" : "middle";
-    const lbl = W < 520 ? new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" }) : fmtDate(a.date, true);
-    g += `<text class="axis-text" x="${x(ts[i])}" y="${H - 10}" text-anchor="${anchor}">${lbl}</text>`;
+  const every = Math.max(1, Math.ceil(70 / (n > 1 ? pw / (n - 1) : pw)));
+  cfg.xs.forEach((xv, i) => {
+    if (i % every && i !== n - 1) return;
+    if (i !== n - 1 && n - 1 - i < every && i % every === 0 && i !== 0) return;
+    const anchor = n === 1 ? "middle" : i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+    g += `<text class="axis-text" x="${x(xv)}" y="${H - 10}" text-anchor="${anchor}">${cfg.xLabels[i]}</text>`;
   });
-  const pts = A.map((a, i) => [x(ts[i]), y(vals[i])]);
-  const path = pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
-  const area = path + ` L${pts[pts.length-1][0]} ${y(0)} L${pts[0][0]} ${y(0)} Z`;
-  let marks = `<path d="${area}" fill="var(--accent)" fill-opacity="0.10"/>`;
-  marks += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  let marks = "";
+  const ptsOf = (vals) => vals.map((v, i) => v == null ? null : [x(cfg.xs[i]), y(v)]);
+  const pathOf = (pts) => { let d = "", pen = false; pts.forEach((p) => { if (!p) { pen = false; return; } d += (pen ? "L" : "M") + p[0] + " " + p[1] + " "; pen = true; }); return d; };
+  cfg.series.filter((s) => s.ghost).forEach((s) => {
+    const pts = ptsOf(s.vals);
+    marks += `<path d="${pathOf(pts)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>`;
+    pts.forEach((p) => { if (p) marks += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"/>`; });
+  });
+  const main = cfg.series.find((s) => !s.ghost);
+  const pts = ptsOf(main.vals);
+  const real = pts.filter(Boolean);
+  if (real.length > 1) {
+    const area = pathOf(pts) + `L${real[real.length - 1][0]} ${y(0)} L${real[0][0]} ${y(0)} Z`;
+    marks += `<path d="${area}" fill="var(--accent)" fill-opacity="0.10"/>`;
+  }
+  marks += `<path d="${pathOf(pts)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   pts.forEach((p, i) => {
-    const sel = i === state.sel, last = i === pts.length - 1;
+    if (!p) return;
+    const sel = i === cfg.sel, last = p === real[real.length - 1];
     marks += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 7 : 5}" fill="${sel || last ? "var(--accent)" : "var(--surface)"}" stroke="${sel ? "var(--ink)" : "var(--accent)"}" stroke-width="2"/>`;
   });
-  const lp = pts[pts.length - 1];
-  marks += `<text x="${lp[0] + 10}" y="${lp[1] + 4}" fill="var(--ink)" font-size="13" font-weight="700" class="num" font-family="var(--font-body)">${isTotal ? pct(vals[vals.length-1]) : "Level " + vals[vals.length-1]}</text>`;
+  if (real.length) {
+    const lp = real[real.length - 1], lv = main.vals[pts.indexOf(lp)];
+    marks += `<text x="${lp[0] + 10}" y="${lp[1] + 4}" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${cfg.endFmt(lv)}</text>`;
+  }
   pts.forEach((p, i) => {
-    const a = A[i];
-    marks += `<circle class="pt-hit" tabindex="0" role="button" data-i="${i}" cx="${p[0]}" cy="${p[1]}" r="16" data-tip="${fmtDate(a.date)}: total ${pct(a.total)}, level ${a.level}, stopped at item ${a.stopItems[2] || a.reached}"/>`;
+    if (!p) return;
+    marks += `<circle class="pt-hit" tabindex="0" ${cfg.onPick ? 'role="button"' : ""} data-i="${i}" cx="${p[0]}" cy="${p[1]}" r="16" data-tip="${cfg.tip(i)}"/>`;
   });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${marks}</svg>`;
-  el.querySelectorAll(".pt-hit").forEach((c) => {
-    const pick = () => { state.sel = +c.dataset.i; renderAll(); };
+  if (cfg.onPick) el.querySelectorAll(".pt-hit").forEach((c) => {
+    const pick = () => cfg.onPick(+c.dataset.i);
     c.addEventListener("click", pick);
     c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
   });
-  $("#progSub").textContent = isTotal
-    ? "Total assessment score at each assessment. Select a point to see its item scores below."
-    : "Level reached at each assessment. Select a point to see its item scores below.";
 }
 
-function renderTable() {
-$("#progTable").innerHTML = "<tr><th>Date</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
-  A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+/* ================= TEACHER VIEW ================= */
+const T = { year: 2026, metric: "total", item: null };
+const yearRounds = (y) => ROUNDS.filter((r) => r.year === y);
+const classOf = (y) => (TEACHER.classes[y] || []).map((id) => BY_ID[id]);
+const roundLabel = (r) => `${r.term} · ${fmtDate(r.date, "short")}`;
+
+function roundStats(y) {
+  const sts = classOf(y);
+  return yearRounds(y).map((r) => {
+    const as = sts.map((s) => s.byRound[r.id]).filter(Boolean);
+    return { r, n: as.length, total: avg(as.map((a) => a.total)), level: avg(as.map((a) => a.level)), as };
+  });
+}
+function itemSeries(y, item) {
+  return roundStats(y).map((rs) => ({
+    r: rs.r, n: rs.n,
+    avg: rs.n ? avg(rs.as.map((a) => a.scores[item - 1] ?? 0)) : null,
+    full: rs.as.filter((a) => a.scores[item - 1] === 100).length,
+  }));
+}
+function itemChanges(y) {
+  const out = [];
+  for (let n = 1; n <= TOTAL_ITEMS; n++) {
+    const s = itemSeries(y, n).filter((p) => p.avg != null);
+    if (!s.length || s.every((p) => p.avg === 0)) { out.push(null); continue; }
+    out.push({ d: s[s.length - 1].avg - s[0].avg, start: s[0].avg, end: s[s.length - 1].avg, from: s[0].r, to: s[s.length - 1].r });
+  }
+  return out;
+}
+function studentYear(st, y) {
+  const as = st.assessments.filter((a) => a.year === y);
+  const first = as[0], last = as[as.length - 1];
+  return { as, first, last, change: as.length > 1 ? last.level - first.level : null };
 }
 
-function setMetric(mm) {
-  state.metric = mm;
-  $("#mTotal").setAttribute("aria-pressed", mm === "total");
-  $("#mLevel").setAttribute("aria-pressed", mm === "level");
-  drawLine();
-}
-$("#mTotal").onclick = () => setMetric("total");
-$("#mLevel").onclick = () => setMetric("level");
+function renderTeacher() {
+  const y = T.year;
+  const sts = classOf(y);
+  const rs = roundStats(y);
+  const done = rs.filter((x) => x.n > 0);
+  const latestRound = done[done.length - 1];
 
-/* Item bars */
-function renderDatePick() {
-$("#datePick").innerHTML = A.map((a, i) =>
-  `<button type="button" data-i="${i}">${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</button>`).join("");
+  $("#t-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
+  $("#t-meta").innerHTML = [TEACHER.school, TEACHER.setting, `${sts.length} students in ${y}`, `${done.length} assessment rounds in ${y}`]
+    .map((t) => `<span>${t}</span>`).join("");
+
+  // Summary tiles
+  const rows = sts.map((st) => ({ st, ...studentYear(st, y) }));
+  const levels = rows.filter((r) => r.last).map((r) => r.last.level);
+  const changes = rows.filter((r) => r.change != null).map((r) => r.change);
+  const moved = changes.filter((c) => c > 0).length;
+  $("#t-stats").innerHTML = [
+    [sts.length, `Students in ${y}`],
+    [levels.length ? r1(avg(levels)) : "—", "Average current level"],
+    [changes.length ? signed(avg(changes), r1) : "—", `Average levels gained in ${y} (${moved} of ${changes.length} students moved up)`],
+    [latestRound ? `${latestRound.n} of ${sts.length}` : "—", latestRound ? `Assessed in the latest round (${latestRound.r.term})` : "No assessments yet"],
+  ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
+
+  // Student list
+  $("#t-listTitle").textContent = `Students in ${y}`;
+  $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>Year level</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
+    rows.map((r) => {
+      const missed = latestRound && !r.st.byRound[latestRound.r.id];
+      const status = missed ? `Not assessed in ${latestRound.r.term}` : r.change != null && r.change <= 0 ? "No level gain" : "";
+      const lvl = r.last ? r.last.level : 0;
+      const ch = r.change == null ? `<span class="sub">First year</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
+      return `<tr data-id="${r.st.id}">
+        <td><a href="#${r.st.id}">${r.st.name}</a></td>
+        <td>${yearLevel(r.st, y)}</td>
+        <td><span class="chip ${r.st.type === "aac" ? "aac" : ""}">${typeName(r.st.type)}</span></td>
+        <td><div class="lvl" data-tip="${r.st.name}: level ${lvl} of 36"><b class="num">${lvl}</b><div class="track"><div class="fill" style="width:${lvl / 36 * 100}%"></div></div></div></td>
+        <td>${ch}</td>
+        <td>${r.last ? fmtDate(r.last.date) : "—"}</td>
+        <td class="num">${r.last ? r.last.gaps.length + r.last.stopItems.length : "—"}</td>
+        <td>${status ? `<span class="status">${status}</span>` : ""}</td></tr>`;
+    }).join("") + "</tbody>";
+
+  drawTeacherProg();
+  if (T.item == null) {
+    const ch = itemChanges(y);
+    let best = 1, bd = -Infinity;
+    ch.forEach((c, i) => { if (c && c.d > bd) { bd = c.d; best = i + 1; } });
+    T.item = best;
+  }
+  $("#t-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === T.item ? "selected" : ""}>Item ${i + 1}</option>`).join("");
+  drawItem();
+  drawChanges();
+  renderShared(rows);
+  renderTeacherFlags(rows, latestRound);
 }
-$("#datePick").addEventListener("click", (e) => {
+
+function drawTeacherProg() {
+  const y = T.year, isTotal = T.metric === "total";
+  const rs = roundStats(y);
+  const prev = TEACHER.classes[y - 1] ? roundStats(y - 1) : null;
+  const key = isTotal ? "total" : "level";
+  const vals = rs.map((x) => x[key]);
+  const pvals = prev ? prev.map((x) => x[key]) : [];
+  const all = [...vals, ...pvals].filter((v) => v != null);
+  const step = isTotal ? 10 : 2;
+  const fmt = (v) => isTotal ? pct(v) : "Level " + r1(v);
+  $("#t-progSub").textContent = isTotal
+    ? `Average total score across the class at each round in ${y}.`
+    : `Average level across the class at each round in ${y}.`;
+  $("#t-progLegend").innerHTML = `<span><i class="lg-line"></i>${y} class</span>` + (prev ? `<span><i class="lg-ghost"></i>${y - 1} class</span>` : "");
+  lineChart($("#t-prog"), {
+    xs: rs.map((_, i) => i), xLabels: rs.map((x) => roundLabel(x.r)),
+    series: [{ vals }, ...(prev ? [{ vals: pvals, ghost: true }] : [])],
+    yMax: niceMax(Math.max(...all, step), step), yStep: step,
+    yFmt: (v) => isTotal ? v + "%" : v, endFmt: fmt,
+    tip: (i) => `${rs[i].r.term} ${y}: ${fmt(vals[i])} across ${rs[i].n} students` + (prev && pvals[i] != null ? `. ${y - 1}: ${fmt(pvals[i])}` : ""),
+  });
+  $("#t-progTable").innerHTML = `<tr><th>Round</th><th>Students assessed</th><th>Average total</th><th>Average level</th>${prev ? `<th>${y - 1} average total</th>` : ""}</tr>` +
+    rs.map((x, i) => `<tr><td>${x.r.term} (${fmtDate(x.r.date)})</td><td>${x.n}</td><td>${x.n ? pct(x.total) : "—"}</td><td>${x.n ? r1(x.level) : "—"}</td>${prev ? `<td>${prev[i].n ? pct(prev[i].total) : "—"}</td>` : ""}</tr>`).join("");
+}
+
+function drawItem() {
+  const y = T.year, n = T.item;
+  const s = itemSeries(y, n);
+  const prev = TEACHER.classes[y - 1] ? itemSeries(y - 1, n) : null;
+  $("#t-itemLegend").innerHTML = `<span><i class="lg-line"></i>Item ${n}, ${y} class</span>` + (prev ? `<span><i class="lg-ghost"></i>Item ${n}, ${y - 1} class</span>` : "");
+  lineChart($("#t-item"), {
+    xs: s.map((_, i) => i), xLabels: s.map((p) => roundLabel(p.r)),
+    series: [{ vals: s.map((p) => p.avg) }, ...(prev ? [{ vals: prev.map((p) => p.avg), ghost: true }] : [])],
+    yMax: 100, yStep: 20, yFmt: (v) => v + "%", endFmt: (v) => Math.round(v) + "%",
+    tip: (i) => `Item ${n}, ${s[i].r.term} ${y}: average ${Math.round(s[i].avg)}% across ${s[i].n} students. ${s[i].full} at 100%.`,
+  });
+  const real = s.filter((p) => p.avg != null);
+  const a = real[0], b = real[real.length - 1];
+  $("#t-itemSummary").innerHTML = !a ? `No students were assessed on item ${n} in ${y}.`
+    : real.length === 1 ? `Item ${n}: class average <b>${Math.round(a.avg)}%</b> in ${a.r.term}. ${a.full} of ${a.n} students at 100%.`
+    : `Item ${n}: class average went from <b>${Math.round(a.avg)}%</b> in ${a.r.term} to <b>${Math.round(b.avg)}%</b> in ${b.r.term} (<b>${signed(Math.round(b.avg - a.avg))}</b> points). ${b.full} of ${b.n} students now score 100%.`;
+}
+
+function drawChanges() {
+  const el = $("#t-change");
+  const ch = itemChanges(T.year);
+  const W = Math.max(300, el.clientWidth), H = 190;
+  const m = { t: 14, r: 8, b: 28, l: 46 };
+  const ds = ch.filter(Boolean).map((c) => c.d);
+  const maxV = Math.max(10, Math.ceil(Math.max(0, ...ds) / 10) * 10);
+  const minV = Math.min(0, Math.floor(Math.min(0, ...ds) / 10) * 10);
+  const y = (v) => m.t + (maxV - v) / (maxV - minV) * (H - m.t - m.b);
+  const bw = (W - m.l - m.r) / TOTAL_ITEMS;
+  let g = "";
+  [maxV, minV].filter((v) => v !== 0).forEach((v) => {
+    g += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`;
+    g += `<text class="axis-text num" x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end">${signed(v)}</text>`;
+  });
+  g += `<line class="zero-line" x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}"/>`;
+  g += `<text class="axis-text num" x="${m.l - 8}" y="${y(0) + 4}" text-anchor="end">0</text>`;
+  [1, 6, 12, 18, 24, 30, 36].forEach((n) => {
+    g += `<text class="axis-text num" x="${m.l + (n - 0.5) * bw}" y="${H - 8}" text-anchor="middle">${n}</text>`;
+  });
+  let bars = "";
+  ch.forEach((c, i) => {
+    const n = i + 1, x = m.l + i * bw + 1, w = Math.max(2, bw - 2);
+    const sel = n === T.item;
+    if (c && c.d !== 0) {
+      const top = Math.min(y(c.d), y(0)), h = Math.max(1, Math.abs(y(c.d) - y(0)));
+      bars += `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="2" fill="${c.d > 0 ? "var(--accent)" : "var(--stop)"}" ${sel ? 'stroke="var(--ink)" stroke-width="2"' : ""}/>`;
+    } else if (sel) {
+      bars += `<rect x="${x}" y="${y(0) - 2}" width="${w}" height="4" fill="var(--ink)"/>`;
+    }
+    const t = !c ? `Item ${n}: no student in the class has reached it yet` : `Item ${n}: ${Math.round(c.start)}% → ${Math.round(c.end)}% (${signed(Math.round(c.d))} points)`;
+    bars += `<rect class="bar-hit" data-n="${n}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" data-tip="${t}"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${bars}<text class="axis-text" x="${W - m.r}" y="${H - 8}" text-anchor="end"></text></svg>`;
+  el.querySelectorAll(".bar-hit").forEach((b) => b.addEventListener("click", () => {
+    T.item = +b.dataset.n; $("#t-itemSel").value = T.item; drawItem(); drawChanges();
+  }));
+  $("#t-changeSub").textContent = `Change in class average on each item from the first to the latest round of ${T.year}. Select a bar to see that item above.`;
+}
+
+function renderShared(rows) {
+  const map = {};
+  rows.forEach((r) => {
+    if (!r.last) return;
+    [...r.last.gaps, ...r.last.stopItems].forEach((n) => { (map[n] = map[n] || []).push(r.st); });
+  });
+  const items = Object.entries(map).filter(([, v]) => v.length > 1).sort((a, b) => b[1].length - a[1].length || a[0] - b[0]).slice(0, 6);
+  $("#t-shared").innerHTML = items.length ? items.map(([n, sts]) =>
+    `<li><span class="it">Item ${n}</span><span class="cnt">${sts.length} students</span><span class="names">${sts.map((s) => `<a href="#${s.id}">${s.name}</a>`).join("")}</span></li>`).join("")
+    : `<li><span class="sub">No item is a target for more than one student.</span></li>`;
+}
+
+function renderTeacherFlags(rows, latestRound) {
+  const flags = [];
+  rows.forEach((r) => {
+    if (latestRound && !r.st.byRound[latestRound.r.id]) flags.push(["Not assessed", `<a href="#${r.st.id}">${r.st.name}</a> was not assessed in ${latestRound.r.term} (${fmtDate(latestRound.r.date)}).`]);
+    if (r.change != null && r.change <= 0) flags.push(["No gain", `<a href="#${r.st.id}">${r.st.name}</a> is at level ${r.last.level}, ${r.change === 0 ? "the same as" : "below"} the start of ${T.year} (level ${r.first.level}).`]);
+  });
+  $("#t-flags").innerHTML = flags.length ? flags.map(([t, s]) => `<li><span class="tag">${t}</span><span>${s}</span></li>`).join("")
+    : `<li><span class="tag info">None</span><span>Nothing to follow up for ${T.year}.</span></li>`;
+}
+
+$("#t-years").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  state.sel = +b.dataset.i; renderAll();
+  T.year = +b.dataset.y; renderTeacher();
 });
-$("#showPrev").addEventListener("change", renderBars);
-$("#moreBtn").addEventListener("click", () => { state.showAll = !state.showAll; renderBars(); });
+$("#t-mTotal").onclick = () => { T.metric = "total"; $("#t-mTotal").setAttribute("aria-pressed", true); $("#t-mLevel").setAttribute("aria-pressed", false); drawTeacherProg(); };
+$("#t-mLevel").onclick = () => { T.metric = "level"; $("#t-mLevel").setAttribute("aria-pressed", true); $("#t-mTotal").setAttribute("aria-pressed", false); drawTeacherProg(); };
+$("#t-itemSel").addEventListener("change", (e) => { T.item = +e.target.value; drawItem(); drawChanges(); });
+$("#t-students").addEventListener("click", (e) => {
+  if (e.target.closest("a")) return;
+  const tr = e.target.closest("tr[data-id]"); if (tr) location.hash = tr.dataset.id;
+});
+
+/* ================= STUDENT VIEW ================= */
+const S = { st: null, A: [], latest: null, metric: "total", sel: 0, showAll: false };
+
+function renderStudent(st) {
+  S.st = st; S.A = st.assessments; S.latest = S.A[S.A.length - 1];
+  S.sel = S.A.length - 1; S.showAll = false;
+  const A = S.A, latest = S.latest, prev = A[A.length - 2];
+  const nowClass = teacherFor(st.id, 2026);
+  $("#s-name").textContent = st.name;
+  $("#s-typeBadge").textContent = typeName(st.type);
+  $("#s-back").textContent = `← Room 4 class (${T.year})`;
+  $("#s-meta").innerHTML = [
+    yearLevel(st, latest.year), TEACHER.school,
+    latest.year === 2026 ? (nowClass === TEACHER.room ? `Current class: ${TEACHER.room} · ${TEACHER.name}` : "Current class: another class") : `Last assessed in ${latest.year}`,
+    `${A.length} assessments since ${fmtDate(A[0].date)}`,
+  ].map((t) => `<span>${t}</span>`).join("");
+
+  $("#s-levelEyebrow").textContent = `Student's current level (${typeName(st.type)})`;
+  $("#s-levelNum").textContent = latest.level;
+  const dl = prev ? latest.level - prev.level : 0;
+  $("#s-levelDelta").textContent = (prev
+    ? (dl > 0 ? "Up " + dl : dl < 0 ? "Down " + -dl : "No change") + " since " + fmtDate(prev.date)
+    : "First assessment") + " · assessed " + fmtDate(latest.date);
+  $("#s-targets").innerHTML =
+    latest.gaps.map((n) => `<div class="target gap"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Gap below level</span></div>`).join("") +
+    latest.stopItems.map((n) => `<div class="target"><strong>Item ${n}</strong><span class="num">Scored ${latest.scores[n-1]}%</span><span>Stop point</span></div>`).join("");
+  $("#s-facts").innerHTML =
+    `<span>Latest total <b class="num">${pct(latest.total)}</b></span>` +
+    `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
+    `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
+
+  $("#s-progTable").innerHTML = "<tr><th>Date</th><th>Class</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
+    A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${a.cls}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+  $("#s-datePick").innerHTML = A.map((a, i) => `<button type="button" data-i="${i}">${fmtDate(a.date, "short")}</button>`).join("");
+
+  renderStudentSummary();
+  renderStudentHeat();
+  drawStudentLine();
+  renderBars();
+}
+
+function drawStudentLine() {
+  const A = S.A, isTotal = S.metric === "total";
+  const vals = A.map((a) => isTotal ? a.total : a.level);
+  const step = isTotal ? 10 : 2;
+  lineChart($("#s-line"), {
+    xs: A.map((a) => +new Date(a.date + "T00:00:00")), xLabels: A.map((a) => fmtDate(a.date, "short")),
+    series: [{ vals }], yMax: niceMax(Math.max(...vals), step), yStep: step,
+    yFmt: (v) => isTotal ? v + "%" : v, endFmt: (v) => isTotal ? pct(v) : "Level " + v,
+    sel: S.sel, onPick: (i) => { S.sel = i; drawStudentLine(); renderBars(); },
+    tip: (i) => `${fmtDate(A[i].date)} (${A[i].cls}): total ${pct(A[i].total)}, level ${A[i].level}, stopped at item ${A[i].stopItems[2] || A[i].reached}`,
+  });
+  $("#s-progSub").textContent = (isTotal ? "Total assessment score" : "Level reached") + " at each assessment. Select a point to see its item scores below.";
+}
 
 function barRow(a, p, n) {
   const v = a.scores[n - 1];
@@ -450,11 +889,11 @@ function barRow(a, p, n) {
     <span class="bar-val">${reached ? v + "%" : "—"}</span></div>`;
 }
 function renderBars() {
-  const a = A[state.sel];
-  const p = $("#showPrev").checked && state.sel > 0 ? A[state.sel - 1] : null;
-  $("#bars").classList.toggle("show-prev", !!p);
-  $("#prevLegend").hidden = !p;
-  const shown = state.showAll ? TOTAL_ITEMS : Math.min(TOTAL_ITEMS, a.reached + 3);
+  const a = S.A[S.sel];
+  const p = $("#s-showPrev").checked && S.sel > 0 ? S.A[S.sel - 1] : null;
+  $("#s-bars").classList.toggle("show-prev", !!p);
+  $("#s-prevLegend").hidden = !p;
+  const shown = S.showAll ? TOTAL_ITEMS : Math.min(TOTAL_ITEMS, a.reached + 3);
   let h = "";
   for (let n = 1; n <= shown; n++) {
     if (n === a.stopItems[0]) h += `<div class="stop-group"><span class="stop-cap">Assessment stopped here: three items in a row below 100%</span>`;
@@ -462,33 +901,29 @@ function renderBars() {
     if (n === a.stopItems[2]) h += `</div>`;
     if (n === a.level) h += `<div class="level-mark">Level ${a.level}</div>`;
   }
-  $("#bars").innerHTML = h;
-  $("#moreBtn").textContent = state.showAll
-    ? "Hide items not reached"
-    : `Show all 36 items (items ${shown + 1}–36 not reached)`;
-  $("#itemSub").textContent = `Assessment on ${fmtDate(a.date)}: level ${a.level}, total ${pct(a.total)}.` +
-    (p ? ` The dark tick shows the score on ${fmtDate(p.date)}.` : "");
-  $("#datePick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.i === state.sel));
+  $("#s-bars").innerHTML = h;
+  $("#s-moreBtn").hidden = shown >= TOTAL_ITEMS && !S.showAll;
+  $("#s-moreBtn").textContent = S.showAll ? "Hide items not reached" : `Show all 36 items (items ${shown + 1}–36 not reached)`;
+  $("#s-itemSub").textContent = `Assessment on ${fmtDate(a.date)} (${a.cls}): level ${a.level}, total ${pct(a.total)}.` + (p ? ` The dark tick shows the score on ${fmtDate(p.date)}.` : "");
+  $("#s-datePick").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.i === S.sel));
 }
 
-/* Stats and flags */
-function renderSummary() {
-  const first = A[0];
+function renderStudentSummary() {
+  const A = S.A, latest = S.latest, first = A[0];
   const days = Math.round((Date.now() - new Date(latest.date + "T00:00:00")) / 864e5);
-  const gapDays = (new Date(latest.date) - new Date(first.date)) / 864e5 / (A.length - 1);
+  const gapMonths = A.length > 1 ? Math.round((new Date(latest.date) - new Date(first.date)) / 864e5 / (A.length - 1) / 30.44) : null;
   const mastered = latest.scores.filter((v) => v === 100).length;
-  $("#stats").innerHTML = [
-    [`+${latest.level - first.level}`, `Levels gained since first assessment (${first.level} to ${latest.level})`],
+  $("#s-stats").innerHTML = [
+    [signed(latest.level - first.level), `Levels gained since first assessment (${first.level} to ${latest.level})`],
     [mastered, "Items at 100% in the latest assessment"],
-    [days, `Days since last assessment (they are about ${Math.round(gapDays / 30.44)} months apart)`],
+    [days, "Days since last assessment" + (gapMonths ? ` (they are about ${gapMonths} months apart)` : "")],
   ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
 
   const flags = [];
   latest.gaps.forEach((n) => {
     const hist = A.map((a) => a.scores[n - 1]).filter((v) => v !== undefined);
     const wasFull = hist.slice(0, -1).includes(100);
-    flags.push(["Gap", `Item ${n} is below the student's level at ${latest.scores[n-1]}%.` +
-      (wasFull ? ` It was 100% before, so this skill may be slipping.` : "")]);
+    flags.push(["Gap", `Item ${n} is below the student's level at ${latest.scores[n-1]}%.` + (wasFull ? " It was 100% before, so this skill may be slipping." : "")]);
   });
   for (let n = 1; n <= latest.reached; n++) {
     const hist = A.map((a) => a.scores[n - 1]).filter((v) => v !== undefined);
@@ -503,15 +938,14 @@ function renderSummary() {
       flags.push(["New", `Item ${n} reached 100% for the first time on ${fmtDate(latest.date)}.`]);
     }
   }
-  $("#flags").innerHTML = flags.map(([t, s]) =>
-    `<li><span class="tag ${t === "New" ? "info" : ""}">${t}</span><span>${s}</span></li>`).join("") ||
-    `<li><span class="tag info">None</span><span>Nothing flagged for this version.</span></li>`;
+  $("#s-flags").innerHTML = flags.map(([t, s]) => `<li><span class="tag ${t === "New" ? "info" : ""}">${t}</span><span>${s}</span></li>`).join("") ||
+    `<li><span class="tag info">None</span><span>Nothing flagged.</span></li>`;
 }
 
-/* Heatmap */
-function renderHeat() {
+function renderStudentHeat() {
+  const A = S.A;
   const maxReached = Math.max(...A.map((a) => a.reached));
-  let h = "<tr><th></th>" + A.map((a) => `<th>${new Date(a.date + "T00:00:00").toLocaleDateString("en-AU", { month: "short", year: "2-digit" })}</th>`).join("") + "</tr>";
+  let h = "<tr><th></th>" + A.map((a) => `<th>${fmtDate(a.date, "short")}</th>`).join("") + "</tr>";
   for (let n = 1; n <= maxReached; n++) {
     h += `<tr><th class="rowh">Item ${n}</th>`;
     A.forEach((a) => {
@@ -524,20 +958,36 @@ function renderHeat() {
     });
     h += "</tr>";
   }
-  h += `<tr><th class="rowh">Items ${maxReached + 1}–36</th><td colspan="${A.length}" style="color:var(--muted);font-size:13px;padding:6px">Not reached yet</td></tr>`;
-  $("#heat").innerHTML = h;
+  if (maxReached < TOTAL_ITEMS) h += `<tr><th class="rowh">Items ${maxReached + 1}–36</th><td colspan="${A.length}" style="color:var(--muted);font-size:13px;padding:6px">Not reached yet</td></tr>`;
+  $("#s-heat").innerHTML = h;
 }
 
-function renderAll() { drawLine(); renderBars(); }
-function load(type) {
-  state.type = type;
-  A = DATA[type].map(analyse);
-  latest = A[A.length - 1];
-  state.sel = A.length - 1;
-  state.showAll = false;
-  $("#typeBadge").textContent = typeName();
-  renderHero(); renderTable(); renderDatePick(); renderSummary(); renderHeat(); renderAll();
+$("#s-datePick").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.sel = +b.dataset.i; drawStudentLine(); renderBars();
+});
+$("#s-showPrev").addEventListener("change", renderBars);
+$("#s-moreBtn").addEventListener("click", () => { S.showAll = !S.showAll; renderBars(); });
+$("#s-mTotal").onclick = () => { S.metric = "total"; $("#s-mTotal").setAttribute("aria-pressed", true); $("#s-mLevel").setAttribute("aria-pressed", false); drawStudentLine(); };
+$("#s-mLevel").onclick = () => { S.metric = "level"; $("#s-mLevel").setAttribute("aria-pressed", true); $("#s-mTotal").setAttribute("aria-pressed", false); drawStudentLine(); };
+
+/* ================= ROUTING ================= */
+function route() {
+  const st = BY_ID[location.hash.slice(1)];
+  tip.hidden = true;
+  $("#teacherView").hidden = !!st;
+  $("#studentView").hidden = !st;
+  if (st) renderStudent(st); else renderTeacher();
+  window.scrollTo(0, 0);
 }
-load(STUDENT.assessmentType);
-let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawLine, 120); });
+addEventListener("hashchange", route);
+route();
+let rt;
+addEventListener("resize", () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => {
+    if (S.st && !$("#studentView").hidden) drawStudentLine();
+    else { drawTeacherProg(); drawItem(); drawChanges(); }
+  }, 120);
+});
 </script>
