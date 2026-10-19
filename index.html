@@ -248,7 +248,6 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
         <button type="button" id="t-mLevel" aria-pressed="false">Average level</button>
       </div>
     </div>
-    <div class="legend" id="t-progLegend"></div>
     <div class="chart" id="t-prog" role="img" aria-label="Line chart of the class average at each assessment round"></div>
     <details class="table-view">
       <summary>Show as a table</summary>
@@ -264,7 +263,6 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
       </div>
       <label class="field" for="t-itemSel">Item <select id="t-itemSel"></select></label>
     </div>
-    <div class="legend" id="t-itemLegend"></div>
     <div class="chart" id="t-item" role="img" aria-label="Line chart of the class average on the selected item"></div>
     <p class="summary-line" id="t-itemSummary"></p>
     <div class="subhead">
@@ -293,8 +291,8 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   <section class="panel is-suggest" aria-labelledby="t-flagTitle">
     <div class="panel-head">
       <div class="titles">
-        <h2 id="t-flagTitle">To follow up</h2>
-        <p class="sub">Students who missed the latest round, or haven't moved up a level this year.</p>
+        <h2 id="t-flagTitle">Students not moving up</h2>
+        <p class="sub">Students whose level is the same as, or lower than, at the start of the year.</p>
       </div>
       <span class="chip suggest">Suggested</span>
     </div>
@@ -302,8 +300,9 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
   </section>
 
   <footer class="notes">
-    <p><b>How the numbers are worked out.</b> Class averages include every student in the class who was assessed in that round. Items a student hasn't reached count as 0%, the same as in the student report.</p>
-    <p>The dashed line shows this teacher's class from the year before. It may be different students, so use it as a rough guide only.</p>
+    <p><b>How the numbers are worked out.</b> Every student is assessed in Term 1 and Term 3. Class averages use those two rounds. Items a student hasn't reached count as 0%, the same as in the student report.</p>
+    <p>New students also have an entry assessment when they start. It counts towards their own progress and “Change in the year”, but not towards the class averages for each round.</p>
+    <p>This report is for spotting where a teacher may need more training or support with the framework. It isn't for ranking teachers. Levels gained is the fairest single measure, because average levels depend on which students are in the class.</p>
     <p>Sections marked “Suggested” are ideas added to the original brief.</p>
   </footer>
 </div>
@@ -414,40 +413,36 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 <script>
 /* ---------- Demo data ---------- */
 const TOTAL_ITEMS = 36;
+// Two compulsory rounds a year. New students also get an entry assessment when they start.
 const ROUNDS = [
   { id: 0, year: 2024, term: "Term 1", date: "2024-02-19" },
-  { id: 1, year: 2024, term: "Term 2", date: "2024-06-17" },
-  { id: 2, year: 2024, term: "Term 4", date: "2024-10-21" },
-  { id: 3, year: 2025, term: "Term 1", date: "2025-02-17" },
-  { id: 4, year: 2025, term: "Term 2", date: "2025-06-16" },
-  { id: 5, year: 2025, term: "Term 4", date: "2025-10-20" },
-  { id: 6, year: 2026, term: "Term 1", date: "2026-02-16" },
-  { id: 7, year: 2026, term: "Term 2", date: "2026-06-15" },
-  { id: 8, year: 2026, term: "Term 4", date: "2026-10-12" },
+  { id: 1, year: 2024, term: "Term 3", date: "2024-08-12" },
+  { id: 2, year: 2025, term: "Term 1", date: "2025-02-17" },
+  { id: 3, year: 2025, term: "Term 3", date: "2025-08-11" },
+  { id: 4, year: 2026, term: "Term 1", date: "2026-02-16" },
+  { id: 5, year: 2026, term: "Term 3", date: "2026-08-10" },
 ];
 const TEACHER = {
   name: "Example Teacher", room: "Room 4", school: "Example Primary School", setting: "Education support class",
   classes: {
-    2024: ["s01", "s02", "s03", "s04", "s05", "s06"],
-    2025: ["s01", "s02", "s03", "s04", "s07", "s08", "s09"],
-    2026: ["s01", "s03", "s07", "s08", "s09", "s10", "s11", "s12"],
+    2024: ["s01", "s02", "s03", "s04", "s05"],
+    2025: ["s01", "s02", "s03", "s07", "s08", "s09"],
+    2026: ["s01", "s03", "s07", "s08", "s10", "s12"],
   },
 };
-// yl: year level in 2026. first/last: first and last round in the program. L0: starting level. g: levels per round.
-// gaps: items this student keeps finding hard. miss: rounds they were not assessed.
+// yl: year level in 2026. first/last: first and last compulsory round. entry: date of entry assessment for a new student.
+// L0: starting level. g: levels gained per six months. gaps: items this student keeps finding hard.
 const STUDENT_SPECS = [
-  { id: "s01", name: "Mia T.",   yl: 4, type: "standard", first: 0, last: 8, L0: 6,  g: 0.7, gaps: [4] },
-  { id: "s02", name: "Noah R.",  yl: 5, type: "standard", first: 0, last: 8, L0: 9,  g: 0.5, gaps: [7] },
-  { id: "s03", name: "Leo K.",   yl: 3, type: "aac",      first: 1, last: 8, L0: 3,  g: 0.45, gaps: [2] },
-  { id: "s04", name: "Ruby S.",  yl: 5, type: "standard", first: 0, last: 8, L0: 12, g: 0.9, gaps: [] },
-  { id: "s05", name: "Zara P.",  yl: 4, type: "standard", first: 0, last: 2, L0: 8,  g: 0.8, gaps: [6] },
-  { id: "s06", name: "Eli W.",   yl: 4, type: "aac",      first: 0, last: 2, L0: 2,  g: 0.4, gaps: [] },
-  { id: "s07", name: "Isla B.",  yl: 2, type: "standard", first: 3, last: 8, L0: 4,  g: 0.8, gaps: [3, 9] },
-  { id: "s08", name: "Jack D.",  yl: 3, type: "standard", first: 3, last: 8, L0: 7,  g: 0.15, gaps: [5], miss: [8] },
-  { id: "s09", name: "Aria N.",  yl: 2, type: "aac",      first: 4, last: 8, L0: 2,  g: 0.6, gaps: [] },
-  { id: "s10", name: "Theo H.",  yl: 4, type: "standard", first: 2, last: 8, L0: 10, g: 0.7, gaps: [11] },
-  { id: "s11", name: "Lily F.",  yl: 1, type: "standard", first: 5, last: 8, L0: 3,  g: 1.0, gaps: [] },
-  { id: "s12", name: "Ollie M.", yl: 1, type: "standard", first: 7, last: 8, L0: 2,  g: 0.9, gaps: [] },
+  { id: "s01", name: "Mia T.",   yl: 4, type: "standard", first: 0, last: 5, L0: 6,  g: 1.2, gaps: [4] },
+  { id: "s02", name: "Noah R.",  yl: 5, type: "standard", first: 0, last: 5, L0: 9,  g: 0.9, gaps: [7] },
+  { id: "s03", name: "Leo K.",   yl: 3, type: "aac",      first: 1, last: 5, L0: 3,  g: 0.8, gaps: [2], entry: "2024-05-13" },
+  { id: "s04", name: "Ruby S.",  yl: 5, type: "standard", first: 0, last: 5, L0: 12, g: 1.5, gaps: [] },
+  { id: "s05", name: "Zara P.",  yl: 4, type: "standard", first: 0, last: 1, L0: 8,  g: 1.3, gaps: [6] },
+  { id: "s07", name: "Isla B.",  yl: 2, type: "standard", first: 2, last: 5, L0: 4,  g: 1.4, gaps: [3, 9] },
+  { id: "s08", name: "Jack D.",  yl: 3, type: "standard", first: 2, last: 5, L0: 7,  g: 0.3, gaps: [5] },
+  { id: "s09", name: "Aria N.",  yl: 2, type: "aac",      first: 3, last: 5, L0: 2,  g: 1.0, gaps: [], entry: "2025-05-12" },
+  { id: "s10", name: "Theo H.",  yl: 4, type: "standard", first: 1, last: 5, L0: 10, g: 1.2, gaps: [11] },
+  { id: "s12", name: "Ollie M.", yl: 1, type: "standard", first: 5, last: 5, L0: 2,  g: 1.5, gaps: [], entry: "2026-05-11" },
 ];
 
 function mulberry32(a) {
@@ -504,16 +499,17 @@ function teacherFor(id, year) {
 
 const STUDENTS = STUDENT_SPECS.map((sp) => {
   const rng = mulberry32(seedOf(sp.id));
-  const assessments = [];
-  for (let r = sp.first; r <= sp.last; r++) {
-    const noise = rng() * 1.4 - 0.7;
-    if (sp.miss && sp.miss.includes(r)) continue;
-    const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * (r - sp.first) + noise)));
-    const rd = ROUNDS[r];
-    assessments.push(analyse({ round: r, date: rd.date, year: rd.year, term: rd.term, cls: teacherFor(sp.id, rd.year), scores: genScores(ability, sp.gaps, rng) }));
-  }
+  const slots = [];
+  if (sp.entry) slots.push({ round: null, date: sp.entry, year: +sp.entry.slice(0, 4), term: "Entry" });
+  for (let r = sp.first; r <= sp.last; r++) slots.push({ round: r, date: ROUNDS[r].date, year: ROUNDS[r].year, term: ROUNDS[r].term });
+  const start = +new Date(slots[0].date);
+  const assessments = slots.map((sl) => {
+    const halfYears = (+new Date(sl.date) - start) / (182 * 864e5);
+    const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * halfYears + rng() * 1.4 - 0.7)));
+    return analyse({ ...sl, cls: teacherFor(sp.id, sl.year), scores: genScores(ability, sp.gaps, rng) });
+  });
   const byRound = {};
-  assessments.forEach((a) => { byRound[a.round] = a; });
+  assessments.forEach((a) => { if (a.round != null) byRound[a.round] = a; });
   return { ...sp, assessments, byRound };
 });
 const BY_ID = Object.fromEntries(STUDENTS.map((s) => [s.id, s]));
@@ -652,7 +648,6 @@ function renderTeacher() {
   const sts = classOf(y);
   const rs = roundStats(y);
   const done = rs.filter((x) => x.n > 0);
-  const latestRound = done[done.length - 1];
 
   $("#t-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
   $("#t-meta").innerHTML = [TEACHER.school, TEACHER.setting, `${sts.length} students in ${y}`, `${done.length} assessment rounds in ${y}`]
@@ -664,18 +659,17 @@ function renderTeacher() {
   const changes = rows.filter((r) => r.change != null).map((r) => r.change);
   const moved = changes.filter((c) => c > 0).length;
   $("#t-stats").innerHTML = [
-    [sts.length, `Students in ${y}`],
+    [changes.length ? signed(avg(changes), r1) : "—", `Average levels gained per student in ${y}`],
+    [changes.length ? `${moved} of ${changes.length}` : "—", `Students who moved up at least one level in ${y}`],
     [levels.length ? r1(avg(levels)) : "—", "Average current level"],
-    [changes.length ? signed(avg(changes), r1) : "—", `Average levels gained in ${y} (${moved} of ${changes.length} students moved up)`],
-    [latestRound ? `${latestRound.n} of ${sts.length}` : "—", latestRound ? `Assessed in the latest round (${latestRound.r.term})` : "No assessments yet"],
+    [sts.length, `Students in ${y}`],
   ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
 
   // Student list
   $("#t-listTitle").textContent = `Students in ${y}`;
   $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>Year level</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
     rows.map((r) => {
-      const missed = latestRound && !r.st.byRound[latestRound.r.id];
-      const status = missed ? `Missed ${latestRound.r.term}` : r.change != null && r.change <= 0 ? "No level gain" : "";
+      const status = r.change != null && r.change <= 0 ? "No level gain" : "";
       const lvl = r.last ? r.last.level : 0;
       const ch = r.change == null ? `<span class="sub">First year</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
       return `<tr data-id="${r.st.id}">
@@ -700,42 +694,37 @@ function renderTeacher() {
   drawItem();
   drawChanges();
   renderShared(rows);
-  renderTeacherFlags(rows, latestRound);
+  renderTeacherFlags(rows);
 }
 
 function drawTeacherProg() {
   const y = T.year, isTotal = T.metric === "total";
   const rs = roundStats(y);
-  const prev = TEACHER.classes[y - 1] ? roundStats(y - 1) : null;
   const key = isTotal ? "total" : "level";
   const vals = rs.map((x) => x[key]);
-  const pvals = prev ? prev.map((x) => x[key]) : [];
-  const all = [...vals, ...pvals].filter((v) => v != null);
+  const all = vals.filter((v) => v != null);
   const step = isTotal ? 10 : 2;
   const fmt = (v) => isTotal ? pct(v) : "Level " + r1(v);
   $("#t-progSub").textContent = isTotal
     ? `Average total score across the class at each round in ${y}.`
     : `Average level across the class at each round in ${y}.`;
-  $("#t-progLegend").innerHTML = `<span><i class="lg-line"></i>${y} class</span>` + (prev ? `<span><i class="lg-ghost"></i>${y - 1} class</span>` : "");
   lineChart($("#t-prog"), {
     xs: rs.map((_, i) => i), xLabels: rs.map((x) => roundLabel(x.r)),
-    series: [{ vals }, ...(prev ? [{ vals: pvals, ghost: true }] : [])],
+    series: [{ vals }],
     yMax: niceMax(Math.max(...all, step), step), yStep: step,
     yFmt: (v) => isTotal ? v + "%" : v, endFmt: fmt,
-    tip: (i) => `${rs[i].r.term} ${y}: ${fmt(vals[i])} across ${rs[i].n} students` + (prev && pvals[i] != null ? `. ${y - 1}: ${fmt(pvals[i])}` : ""),
+    tip: (i) => `${rs[i].r.term} ${y}: ${fmt(vals[i])} across ${rs[i].n} students`,
   });
-  $("#t-progTable").innerHTML = `<tr><th>Round</th><th>Students assessed</th><th>Average total</th><th>Average level</th>${prev ? `<th>${y - 1} average total</th>` : ""}</tr>` +
-    rs.map((x, i) => `<tr><td>${x.r.term} (${fmtDate(x.r.date)})</td><td>${x.n}</td><td>${x.n ? pct(x.total) : "—"}</td><td>${x.n ? r1(x.level) : "—"}</td>${prev ? `<td>${prev[i].n ? pct(prev[i].total) : "—"}</td>` : ""}</tr>`).join("");
+  $("#t-progTable").innerHTML = `<tr><th>Round</th><th>Students</th><th>Average total</th><th>Average level</th></tr>` +
+    rs.map((x) => `<tr><td>${x.r.term} (${fmtDate(x.r.date)})</td><td>${x.n}</td><td>${x.n ? pct(x.total) : "—"}</td><td>${x.n ? r1(x.level) : "—"}</td></tr>`).join("");
 }
 
 function drawItem() {
   const y = T.year, n = T.item;
   const s = itemSeries(y, n);
-  const prev = TEACHER.classes[y - 1] ? itemSeries(y - 1, n) : null;
-  $("#t-itemLegend").innerHTML = `<span><i class="lg-line"></i>Item ${n}, ${y} class</span>` + (prev ? `<span><i class="lg-ghost"></i>Item ${n}, ${y - 1} class</span>` : "");
   lineChart($("#t-item"), {
     xs: s.map((_, i) => i), xLabels: s.map((p) => roundLabel(p.r)),
-    series: [{ vals: s.map((p) => p.avg) }, ...(prev ? [{ vals: prev.map((p) => p.avg), ghost: true }] : [])],
+    series: [{ vals: s.map((p) => p.avg) }],
     yMax: 100, yStep: 20, yFmt: (v) => v + "%", endFmt: (v) => Math.round(v) + "%",
     tip: (i) => `Item ${n}, ${s[i].r.term} ${y}: average ${Math.round(s[i].avg)}% across ${s[i].n} students. ${s[i].full} at 100%.`,
   });
@@ -798,14 +787,13 @@ function renderShared(rows) {
     : `<li><span class="sub">No item is a target for more than one student.</span></li>`;
 }
 
-function renderTeacherFlags(rows, latestRound) {
+function renderTeacherFlags(rows) {
   const flags = [];
   rows.forEach((r) => {
-    if (latestRound && !r.st.byRound[latestRound.r.id]) flags.push(["Not assessed", `<a href="#${r.st.id}">${r.st.name}</a> was not assessed in ${latestRound.r.term} (${fmtDate(latestRound.r.date)}).`]);
     if (r.change != null && r.change <= 0) flags.push(["No gain", `<a href="#${r.st.id}">${r.st.name}</a> is at level ${r.last.level}, ${r.change === 0 ? "the same as" : "below"} the start of ${T.year} (level ${r.first.level}).`]);
   });
   $("#t-flags").innerHTML = flags.length ? flags.map(([t, s]) => `<li><span class="tag">${t}</span><span>${s}</span></li>`).join("")
-    : `<li><span class="tag info">None</span><span>Nothing to follow up for ${T.year}.</span></li>`;
+    : `<li><span class="tag info">None</span><span>Every student moved up at least one level in ${T.year}.</span></li>`;
 }
 
 $("#t-years").addEventListener("click", (e) => {
@@ -851,8 +839,8 @@ function renderStudent(st) {
     `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
     `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
 
-  $("#s-progTable").innerHTML = "<tr><th>Date</th><th>Class</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
-    A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${a.cls}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+  $("#s-progTable").innerHTML = "<tr><th>Date</th><th>Round</th><th>Class</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
+    A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${a.term === "Entry" ? "Entry assessment" : a.term}</td><td>${a.cls}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
   $("#s-datePick").innerHTML = A.map((a, i) => `<button type="button" data-i="${i}">${fmtDate(a.date, "short")}</button>`).join("");
 
   renderStudentSummary();
@@ -870,7 +858,7 @@ function drawStudentLine() {
     series: [{ vals }], yMax: niceMax(Math.max(...vals), step), yStep: step,
     yFmt: (v) => isTotal ? v + "%" : v, endFmt: (v) => isTotal ? pct(v) : "Level " + v,
     sel: S.sel, onPick: (i) => { S.sel = i; drawStudentLine(); renderBars(); },
-    tip: (i) => `${fmtDate(A[i].date)} (${A[i].cls}): total ${pct(A[i].total)}, level ${A[i].level}, stopped at item ${A[i].stopItems[2] || A[i].reached}`,
+    tip: (i) => `${fmtDate(A[i].date)}, ${A[i].term === "Entry" ? "entry assessment" : A[i].term} (${A[i].cls}): total ${pct(A[i].total)}, level ${A[i].level}, stopped at item ${A[i].stopItems[2] || A[i].reached}`,
   });
   $("#s-progSub").textContent = (isTotal ? "Total assessment score" : "Level reached") + " at each assessment. Select a point to see its item scores below.";
 }
