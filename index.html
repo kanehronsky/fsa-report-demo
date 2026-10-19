@@ -133,6 +133,14 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .summary-line b { font-variant-numeric: tabular-nums; }
 .subhead { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 14px; }
 
+/* Report-level tabs and pickers */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs a { font-family: var(--font-display); font-weight: 600; font-size: 15px; text-decoration: none; color: var(--ink-2); padding: 8px 14px; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tabs a:hover { color: var(--ink); }
+.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+.pickers { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+@media (max-width: 720px) { .pickers { justify-content: flex-start; } }
+
 /* Class list */
 .class-table { width: 100%; }
 .class-table tbody tr { cursor: pointer; }
@@ -213,15 +221,22 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 
 <!-- ============ TEACHER VIEW ============ -->
 <div class="wrap" id="teacherView">
+  <nav class="tabs" aria-label="Report level">
+    <a href="#teacher" id="nav-teacher">Teacher</a>
+    <a href="#yeargroup" id="nav-yg">Year group</a>
+  </nav>
   <header class="head">
     <div class="who">
-      <span class="eyebrow">Foundational Skills Assessment · Teacher report</span>
-      <h1>Room 4 · Example Teacher</h1>
+      <span class="eyebrow" id="t-eyebrow"></span>
+      <h1 id="t-title"></h1>
       <div class="meta" id="t-meta"></div>
     </div>
     <div class="head-tools">
       <span class="chip">Wireframe · demo data only</span>
-      <div class="seg seg-lg" role="group" aria-label="School year" id="t-years"></div>
+      <div class="pickers">
+        <label class="field" for="t-pick"><span id="t-pickLabel">Class</span> <select id="t-pick"></select></label>
+        <div class="seg seg-lg" role="group" aria-label="School year" id="t-years"></div>
+      </div>
     </div>
   </header>
 
@@ -235,6 +250,17 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
       </div>
     </div>
     <div class="tbl-wrap"><table class="class-table" id="t-students"></table></div>
+  </section>
+
+  <section class="panel is-suggest" id="t-byClassPanel" aria-labelledby="t-byClassTitle">
+    <div class="panel-head">
+      <div class="titles">
+        <h2 id="t-byClassTitle">By class</h2>
+        <p class="sub" id="t-byClassSub"></p>
+      </div>
+      <span class="chip suggest">Suggested</span>
+    </div>
+    <div class="tbl-wrap"><table class="class-table" id="t-byClass"></table></div>
   </section>
 
   <section class="panel" aria-labelledby="t-progTitle">
@@ -259,7 +285,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
     <div class="panel-head">
       <div class="titles">
         <h2 id="t-itemTitle">Item progress</h2>
-        <p class="sub">The class average on one assessment item at each round. Items a student hasn't reached count as 0%.</p>
+        <p class="sub" id="t-itemSubtitle"></p>
       </div>
       <label class="field" for="t-itemSel">Item <select id="t-itemSel"></select></label>
     </div>
@@ -299,17 +325,12 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
     <ul class="flags" id="t-flags"></ul>
   </section>
 
-  <footer class="notes">
-    <p><b>How the numbers are worked out.</b> Every student is assessed in Term 1 and Term 3. Class averages use those two rounds. Items a student hasn't reached count as 0%, the same as in the student report.</p>
-    <p>New students also have an entry assessment when they start. It counts towards their own progress and “Change in the year”, but not towards the class averages for each round.</p>
-    <p>This report is for spotting where a teacher may need more training or support with the framework. It isn't for ranking teachers. Levels gained is the fairest single measure, because average levels depend on which students are in the class.</p>
-    <p>Sections marked “Suggested” are ideas added to the original brief.</p>
-  </footer>
+  <footer class="notes" id="t-notes"></footer>
 </div>
 
 <!-- ============ STUDENT VIEW ============ -->
 <div class="wrap" id="studentView" hidden>
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="#class" id="s-back">← Room 4 class</a></nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="#teacher" id="s-back">← Back</a></nav>
   <header class="head">
     <div class="who">
       <span class="eyebrow">Foundational Skills Assessment · Student report</span>
@@ -413,6 +434,7 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 <script>
 /* ---------- Demo data ---------- */
 const TOTAL_ITEMS = 36;
+const SCHOOL = "Example Primary School";
 // Two compulsory rounds a year. New students also get an entry assessment when they start.
 const ROUNDS = [
   { id: 0, year: 2024, term: "Term 1", date: "2024-02-19" },
@@ -422,28 +444,65 @@ const ROUNDS = [
   { id: 4, year: 2026, term: "Term 1", date: "2026-02-16" },
   { id: 5, year: 2026, term: "Term 3", date: "2026-08-10" },
 ];
-const TEACHER = {
-  name: "Example Teacher", room: "Room 4", school: "Example Primary School", setting: "Education support class",
-  classes: {
-    2024: ["s01", "s02", "s03", "s04", "s05"],
-    2025: ["s01", "s02", "s03", "s07", "s08", "s09"],
-    2026: ["s01", "s03", "s07", "s08", "s10", "s12"],
-  },
+const YEARS = [2024, 2025, 2026];
+const ROOMS = {
+  "Room 1": { teacher: "Teacher B", setting: "Pre-primary and Year 1" },
+  "Room 2": { teacher: "Teacher C", setting: "Year 1 and Year 2" },
+  "Room 3": { teacher: "Teacher D", setting: "Year 3 and Year 4" },
+  "Room 4": { teacher: "Example Teacher", setting: "Education support class" },
 };
-// yl: year level in 2026. first/last: first and last compulsory round. entry: date of entry assessment for a new student.
+// Room 4 is an education support class, so its students are listed by hand.
+const ROOM4 = {
+  2024: ["s01", "s02", "s03", "s04", "s05"],
+  2025: ["s01", "s02", "s03", "s07", "s08", "s09"],
+  2026: ["s01", "s03", "s07", "s08", "s10", "s12"],
+};
+// yl: year level in 2026 (0 = Pre-primary). first/last: first and last compulsory round. entry: date of entry assessment.
 // L0: starting level. g: levels gained per six months. gaps: items this student keeps finding hard.
+// split: which room a Year 1 student is in, since Year 1 is split across Rooms 1 and 2.
 const STUDENT_SPECS = [
-  { id: "s01", name: "Mia T.",   yl: 4, type: "standard", first: 0, last: 5, L0: 6,  g: 1.2, gaps: [4] },
-  { id: "s02", name: "Noah R.",  yl: 5, type: "standard", first: 0, last: 5, L0: 9,  g: 0.9, gaps: [7] },
-  { id: "s03", name: "Leo K.",   yl: 3, type: "aac",      first: 1, last: 5, L0: 3,  g: 0.8, gaps: [2], entry: "2024-05-13" },
-  { id: "s04", name: "Ruby S.",  yl: 5, type: "standard", first: 0, last: 5, L0: 12, g: 1.5, gaps: [] },
-  { id: "s05", name: "Zara P.",  yl: 4, type: "standard", first: 0, last: 1, L0: 8,  g: 1.3, gaps: [6] },
-  { id: "s07", name: "Isla B.",  yl: 2, type: "standard", first: 2, last: 5, L0: 4,  g: 1.4, gaps: [3, 9] },
-  { id: "s08", name: "Jack D.",  yl: 3, type: "standard", first: 2, last: 5, L0: 7,  g: 0.3, gaps: [5] },
-  { id: "s09", name: "Aria N.",  yl: 2, type: "aac",      first: 3, last: 5, L0: 2,  g: 1.0, gaps: [], entry: "2025-05-12" },
-  { id: "s10", name: "Theo H.",  yl: 4, type: "standard", first: 1, last: 5, L0: 10, g: 1.2, gaps: [11] },
-  { id: "s12", name: "Ollie M.", yl: 1, type: "standard", first: 5, last: 5, L0: 2,  g: 1.5, gaps: [], entry: "2026-05-11" },
+  { id: "s01", name: "Mia T.",     yl: 4, type: "standard", first: 0, last: 5, L0: 6,  g: 1.2, gaps: [4] },
+  { id: "s02", name: "Noah R.",    yl: 5, type: "standard", first: 0, last: 5, L0: 9,  g: 0.9, gaps: [7] },
+  { id: "s03", name: "Leo K.",     yl: 3, type: "aac",      first: 1, last: 5, L0: 3,  g: 0.8, gaps: [2], entry: "2024-05-13" },
+  { id: "s04", name: "Ruby S.",    yl: 5, type: "standard", first: 0, last: 5, L0: 12, g: 1.5, gaps: [] },
+  { id: "s05", name: "Zara P.",    yl: 4, type: "standard", first: 0, last: 1, L0: 8,  g: 1.3, gaps: [6] },
+  { id: "s07", name: "Isla B.",    yl: 2, type: "standard", first: 2, last: 5, L0: 4,  g: 1.4, gaps: [3, 9] },
+  { id: "s08", name: "Jack D.",    yl: 3, type: "standard", first: 2, last: 5, L0: 7,  g: 0.3, gaps: [5] },
+  { id: "s09", name: "Aria N.",    yl: 2, type: "aac",      first: 3, last: 5, L0: 2,  g: 1.0, gaps: [], entry: "2025-05-12" },
+  { id: "s10", name: "Theo H.",    yl: 4, type: "standard", first: 1, last: 5, L0: 10, g: 1.2, gaps: [11] },
+  { id: "s12", name: "Ollie M.",   yl: 1, type: "standard", first: 5, last: 5, L0: 2,  g: 1.5, gaps: [], entry: "2026-05-11" },
+  { id: "s13", name: "Ava L.",     yl: 0, type: "standard", first: 4, last: 5, L0: 1,  g: 1.3, gaps: [] },
+  { id: "s14", name: "Max C.",     yl: 0, type: "standard", first: 4, last: 5, L0: 2,  g: 1.0, gaps: [2] },
+  { id: "s15", name: "Sienna J.",  yl: 0, type: "aac",      first: 4, last: 5, L0: 1,  g: 0.8, gaps: [] },
+  { id: "s16", name: "Hugo P.",    yl: 1, type: "standard", first: 2, last: 5, L0: 2,  g: 1.4, gaps: [], split: "Room 1" },
+  { id: "s17", name: "Chloe W.",   yl: 1, type: "standard", first: 2, last: 5, L0: 3,  g: 1.1, gaps: [4], split: "Room 1" },
+  { id: "s18", name: "Finn A.",    yl: 1, type: "standard", first: 2, last: 5, L0: 1,  g: 0.5, gaps: [], split: "Room 2" },
+  { id: "s19", name: "Grace O.",   yl: 1, type: "standard", first: 2, last: 5, L0: 2,  g: 1.6, gaps: [], split: "Room 2" },
+  { id: "s20", name: "Harper E.",  yl: 2, type: "standard", first: 0, last: 5, L0: 2,  g: 1.3, gaps: [], split: "Room 1" },
+  { id: "s21", name: "Oscar V.",   yl: 2, type: "standard", first: 0, last: 5, L0: 1,  g: 1.0, gaps: [3], split: "Room 1" },
+  { id: "s22", name: "Ivy Q.",     yl: 2, type: "standard", first: 0, last: 5, L0: 3,  g: 1.2, gaps: [], split: "Room 2" },
+  { id: "s23", name: "Lucas Y.",   yl: 3, type: "standard", first: 0, last: 5, L0: 4,  g: 1.3, gaps: [], split: "Room 1" },
+  { id: "s24", name: "Matilda Z.", yl: 3, type: "standard", first: 0, last: 5, L0: 5,  g: 1.1, gaps: [6], split: "Room 2" },
+  { id: "s25", name: "Archie G.",  yl: 3, type: "standard", first: 0, last: 5, L0: 3,  g: 0.6, gaps: [], split: "Room 2" },
+  { id: "s26", name: "Evie U.",    yl: 4, type: "standard", first: 0, last: 5, L0: 6,  g: 1.4, gaps: [] },
+  { id: "s27", name: "Henry X.",   yl: 4, type: "standard", first: 0, last: 5, L0: 5,  g: 1.0, gaps: [8] },
+  { id: "s28", name: "Ella H.",    yl: 5, type: "standard", first: 0, last: 5, L0: 8,  g: 1.2, gaps: [] },
+  { id: "s29", name: "Jacob N.",   yl: 5, type: "standard", first: 0, last: 5, L0: 7,  g: 0.9, gaps: [] },
+  { id: "s30", name: "Leah R.",    yl: 6, type: "standard", first: 0, last: 5, L0: 10, g: 1.1, gaps: [] },
 ];
+
+const ylNum = (st, y) => st.yl - (2026 - y);
+const ylName = (n) => n < 0 ? "Kindergarten" : n === 0 ? "Pre-primary" : "Year " + n;
+function roomOf(st, y) {
+  if (ROOM4[y] && ROOM4[y].includes(st.id)) return "Room 4";
+  const n = ylNum(st, y);
+  if (n === 0) return "Room 1";
+  if (n === 1) return st.split || "Room 2";
+  if (n === 2) return "Room 2";
+  if (n === 3 || n === 4) return "Room 3";
+  return "Another class";
+}
+const roomLabel = (room) => ROOMS[room] ? `${room} · ${ROOMS[room].teacher}` : room;
 
 function mulberry32(a) {
   return function () {
@@ -493,10 +552,6 @@ function analyse(a) {
   return { ...a, level, total, stopItems, gaps, reached: s.length };
 }
 
-function teacherFor(id, year) {
-  return TEACHER.classes[year] && TEACHER.classes[year].includes(id) ? TEACHER.room : "Another class";
-}
-
 const STUDENTS = STUDENT_SPECS.map((sp) => {
   const rng = mulberry32(seedOf(sp.id));
   const slots = [];
@@ -506,24 +561,22 @@ const STUDENTS = STUDENT_SPECS.map((sp) => {
   const assessments = slots.map((sl) => {
     const halfYears = (+new Date(sl.date) - start) / (182 * 864e5);
     const ability = Math.max(1, Math.min(TOTAL_ITEMS, Math.round(sp.L0 + sp.g * halfYears + rng() * 1.4 - 0.7)));
-    return analyse({ ...sl, cls: teacherFor(sp.id, sl.year), scores: genScores(ability, sp.gaps, rng) });
+    return analyse({ ...sl, cls: roomOf(sp, sl.year), yearLevel: ylNum(sp, sl.year), scores: genScores(ability, sp.gaps, rng) });
   });
   const byRound = {};
   assessments.forEach((a) => { if (a.round != null) byRound[a.round] = a; });
   return { ...sp, assessments, byRound };
 });
 const BY_ID = Object.fromEntries(STUDENTS.map((s) => [s.id, s]));
-const YEARS = Object.keys(TEACHER.classes).map(Number);
 
 /* ---------- Helpers ---------- */
 const $ = (q) => document.querySelector(q);
 const fmtDate = (d, opt) => new Date(d + "T00:00:00").toLocaleDateString("en-AU",
-  opt === "short" ? { month: "short", year: "2-digit" } : opt === "month" ? { month: "short", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" });
+  opt === "short" ? { month: "short", year: "2-digit" } : { day: "numeric", month: "short", year: "numeric" });
 const pct = (v) => (Math.round(v * 10) / 10).toFixed(1) + "%";
 const avg = (xs) => xs.length ? xs.reduce((t, v) => t + v, 0) / xs.length : null;
 const r1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
 const signed = (v, f = (x) => x) => (v > 0 ? "+" : v < 0 ? "−" : "") + f(Math.abs(v));
-const yearLevel = (st, year) => { const n = st.yl - (2026 - year); return n <= 0 ? "Foundation" : "Year " + n; };
 const typeName = (t) => t === "aac" ? "AAC" : "Standard";
 function niceMax(v, step) { return Math.ceil((v + step * 0.5) / step) * step; }
 
@@ -550,7 +603,7 @@ document.addEventListener("focusin", (e) => {
 document.addEventListener("focusout", () => { tip.hidden = true; });
 
 /* ---------- Line chart (shared) ---------- */
-// cfg: xs, xLabels, series [{vals, ghost}], yMax, yStep, yFmt, endFmt, tip(i), sel, onPick(i)
+// cfg: xs, xLabels, series [{vals}], yMax, yStep, yFmt, endFmt, tip(i), sel, onPick(i)
 function lineChart(el, cfg) {
   const W = Math.max(300, el.clientWidth), H = W < 520 ? 230 : 270;
   const m = { t: 24, r: 64, b: 34, l: 46 };
@@ -567,34 +620,26 @@ function lineChart(el, cfg) {
   const every = Math.max(1, Math.ceil(70 / (n > 1 ? pw / (n - 1) : pw)));
   cfg.xs.forEach((xv, i) => {
     if (i % every && i !== n - 1) return;
-    if (i !== n - 1 && n - 1 - i < every && i % every === 0 && i !== 0) return;
+    if (i !== n - 1 && n - 1 - i < every && i !== 0) return;
     const anchor = n === 1 ? "middle" : i === 0 ? "start" : i === n - 1 ? "end" : "middle";
     g += `<text class="axis-text" x="${x(xv)}" y="${H - 10}" text-anchor="${anchor}">${cfg.xLabels[i]}</text>`;
   });
-  let marks = "";
-  const ptsOf = (vals) => vals.map((v, i) => v == null ? null : [x(cfg.xs[i]), y(v)]);
-  const pathOf = (pts) => { let d = "", pen = false; pts.forEach((p) => { if (!p) { pen = false; return; } d += (pen ? "L" : "M") + p[0] + " " + p[1] + " "; pen = true; }); return d; };
-  cfg.series.filter((s) => s.ghost).forEach((s) => {
-    const pts = ptsOf(s.vals);
-    marks += `<path d="${pathOf(pts)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>`;
-    pts.forEach((p) => { if (p) marks += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"/>`; });
-  });
-  const main = cfg.series.find((s) => !s.ghost);
-  const pts = ptsOf(main.vals);
+  const vals = cfg.series[0].vals;
+  const pts = vals.map((v, i) => v == null ? null : [x(cfg.xs[i]), y(v)]);
   const real = pts.filter(Boolean);
-  if (real.length > 1) {
-    const area = pathOf(pts) + `L${real[real.length - 1][0]} ${y(0)} L${real[0][0]} ${y(0)} Z`;
-    marks += `<path d="${area}" fill="var(--accent)" fill-opacity="0.10"/>`;
-  }
-  marks += `<path d="${pathOf(pts)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  let d = "", pen = false;
+  pts.forEach((p) => { if (!p) { pen = false; return; } d += (pen ? "L" : "M") + p[0] + " " + p[1] + " "; pen = true; });
+  let marks = "";
+  if (real.length > 1) marks += `<path d="${d}L${real[real.length - 1][0]} ${y(0)} L${real[0][0]} ${y(0)} Z" fill="var(--accent)" fill-opacity="0.10"/>`;
+  marks += `<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   pts.forEach((p, i) => {
     if (!p) return;
     const sel = i === cfg.sel, last = p === real[real.length - 1];
     marks += `<circle cx="${p[0]}" cy="${p[1]}" r="${sel ? 7 : 5}" fill="${sel || last ? "var(--accent)" : "var(--surface)"}" stroke="${sel ? "var(--ink)" : "var(--accent)"}" stroke-width="2"/>`;
   });
   if (real.length) {
-    const lp = real[real.length - 1], lv = main.vals[pts.indexOf(lp)];
-    marks += `<text x="${lp[0] + 10}" y="${lp[1] + 4}" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${cfg.endFmt(lv)}</text>`;
+    const lp = real[real.length - 1];
+    marks += `<text x="${lp[0] + 10}" y="${lp[1] + 4}" fill="var(--ink)" font-size="13" font-weight="700" font-family="var(--font-body)">${cfg.endFmt(vals[pts.indexOf(lp)])}</text>`;
   }
   pts.forEach((p, i) => {
     if (!p) return;
@@ -608,14 +653,20 @@ function lineChart(el, cfg) {
   });
 }
 
-/* ================= TEACHER VIEW ================= */
-const T = { year: 2026, metric: "total", item: null };
+/* ================= GROUP VIEW (teacher or year group) ================= */
+// mode "teacher": one class, chosen by room. mode "yeargroup": every student at one year level, whatever class they are in.
+const G = { mode: "teacher", year: 2026, room: "Room 4", yl: 1, metric: "total", item: null };
+const isYG = () => G.mode === "yeargroup";
+const noun = () => isYG() ? "year group" : "class";
 const yearRounds = (y) => ROUNDS.filter((r) => r.year === y);
-const classOf = (y) => (TEACHER.classes[y] || []).map((id) => BY_ID[id]);
 const roundLabel = (r) => `${r.term} · ${fmtDate(r.date, "short")}`;
+const inYear = (st, y) => st.assessments.some((a) => a.year === y);
 
+function cohort(y) {
+  return STUDENTS.filter((st) => inYear(st, y) && (isYG() ? ylNum(st, y) === G.yl : roomOf(st, y) === G.room));
+}
 function roundStats(y) {
-  const sts = classOf(y);
+  const sts = cohort(y);
   return yearRounds(y).map((r) => {
     const as = sts.map((s) => s.byRound[r.id]).filter(Boolean);
     return { r, n: as.length, total: avg(as.map((a) => a.total)), level: avg(as.map((a) => a.level)), as };
@@ -633,7 +684,7 @@ function itemChanges(y) {
   for (let n = 1; n <= TOTAL_ITEMS; n++) {
     const s = itemSeries(y, n).filter((p) => p.avg != null);
     if (!s.length || s.every((p) => p.avg === 0)) { out.push(null); continue; }
-    out.push({ d: s[s.length - 1].avg - s[0].avg, start: s[0].avg, end: s[s.length - 1].avg, from: s[0].r, to: s[s.length - 1].r });
+    out.push({ d: s[s.length - 1].avg - s[0].avg, start: s[0].avg, end: s[s.length - 1].avg });
   }
   return out;
 }
@@ -642,72 +693,115 @@ function studentYear(st, y) {
   const first = as[0], last = as[as.length - 1];
   return { as, first, last, change: as.length > 1 ? last.level - first.level : null };
 }
-
-function renderTeacher() {
-  const y = T.year;
-  const sts = classOf(y);
-  const rs = roundStats(y);
-  const done = rs.filter((x) => x.n > 0);
-
-  $("#t-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
-  $("#t-meta").innerHTML = [TEACHER.school, TEACHER.setting, `${sts.length} students in ${y}`, `${done.length} assessment rounds in ${y}`]
-    .map((t) => `<span>${t}</span>`).join("");
-
-  // Summary tiles
-  const rows = sts.map((st) => ({ st, ...studentYear(st, y) }));
-  const levels = rows.filter((r) => r.last).map((r) => r.last.level);
+function gainStats(rows) {
   const changes = rows.filter((r) => r.change != null).map((r) => r.change);
-  const moved = changes.filter((c) => c > 0).length;
+  return { changes, avgGain: avg(changes), moved: changes.filter((c) => c > 0).length, avgLevel: avg(rows.filter((r) => r.last).map((r) => r.last.level)) };
+}
+
+function renderPickers() {
+  const y = G.year;
+  if (isYG()) {
+    const levels = [...new Set(STUDENTS.filter((st) => inYear(st, y)).map((st) => ylNum(st, y)))].filter((n) => n >= 0).sort((a, b) => a - b);
+    if (!levels.includes(G.yl)) G.yl = levels[0];
+    $("#t-pickLabel").textContent = "Year level";
+    $("#t-pick").innerHTML = levels.map((n) => `<option value="${n}" ${n === G.yl ? "selected" : ""}>${ylName(n)}</option>`).join("");
+  } else {
+    const rooms = Object.keys(ROOMS).filter((rm) => STUDENTS.some((st) => inYear(st, y) && roomOf(st, y) === rm));
+    if (!rooms.includes(G.room)) G.room = rooms[0];
+    $("#t-pickLabel").textContent = "Class";
+    $("#t-pick").innerHTML = rooms.map((rm) => `<option value="${rm}" ${rm === G.room ? "selected" : ""}>${roomLabel(rm)}</option>`).join("");
+  }
+  $("#t-years").innerHTML = YEARS.map((yy) => `<button type="button" data-y="${yy}" aria-pressed="${yy === y}">${yy}</button>`).join("");
+}
+
+function renderGroup() {
+  renderPickers();
+  const y = G.year;
+  const sts = cohort(y);
+  const rows = sts.map((st) => ({ st, ...studentYear(st, y) }));
+  const gs = gainStats(rows);
+  const rooms = [...new Set(sts.map((st) => roomOf(st, y)))];
+
+  $("#nav-teacher").setAttribute("aria-current", isYG() ? "false" : "page");
+  $("#nav-yg").setAttribute("aria-current", isYG() ? "page" : "false");
+  $("#t-eyebrow").textContent = `Foundational Skills Assessment · ${isYG() ? "Year group" : "Teacher"} report`;
+  $("#t-title").textContent = isYG() ? `${ylName(G.yl)} · ${y}` : `${roomLabel(G.room)}`;
+  $("#t-meta").innerHTML = (isYG()
+    ? [SCHOOL, `${sts.length} students across ${rooms.length} ${rooms.length === 1 ? "class" : "classes"}`, "Grouped by each student's year level, not their class"]
+    : [SCHOOL, ROOMS[G.room].setting, `${sts.length} students in ${y}`]
+  ).map((t) => `<span>${t}</span>`).join("");
+
   $("#t-stats").innerHTML = [
-    [changes.length ? signed(avg(changes), r1) : "—", `Average levels gained per student in ${y}`],
-    [changes.length ? `${moved} of ${changes.length}` : "—", `Students who moved up at least one level in ${y}`],
-    [levels.length ? r1(avg(levels)) : "—", "Average current level"],
-    [sts.length, `Students in ${y}`],
+    [gs.changes.length ? signed(gs.avgGain, r1) : "—", `Average levels gained per student in ${y}`],
+    [gs.changes.length ? `${gs.moved} of ${gs.changes.length}` : "—", `Students who moved up at least one level in ${y}`],
+    [gs.avgLevel != null ? r1(gs.avgLevel) : "—", "Average current level"],
+    [sts.length, isYG() ? `${ylName(G.yl)} students in ${y}` : `Students in ${y}`],
   ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
 
-  // Student list
-  $("#t-listTitle").textContent = `Students in ${y}`;
-  $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>Year level</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
+  // Student list. In a year group the second column is the class; in a class it is the year level.
+  $("#t-listTitle").textContent = isYG() ? `${ylName(G.yl)} students in ${y}` : `Students in ${y}`;
+  $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>${isYG() ? "Class" : "Year level"}</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
     rows.map((r) => {
-      const status = r.change != null && r.change <= 0 ? "No level gain" : "";
       const lvl = r.last ? r.last.level : 0;
-      const ch = r.change == null ? `<span class="sub">First year</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
+      const ch = r.change == null ? `<span class="sub">One assessment</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
       return `<tr data-id="${r.st.id}">
         <td><a href="#${r.st.id}">${r.st.name}</a></td>
-        <td>${yearLevel(r.st, y)}</td>
+        <td>${isYG() ? roomLabel(roomOf(r.st, y)) : ylName(ylNum(r.st, y))}</td>
         <td><span class="chip ${r.st.type === "aac" ? "aac" : ""}">${typeName(r.st.type)}</span></td>
         <td><div class="lvl" data-tip="${r.st.name}: level ${lvl} of 36"><b class="num">${lvl}</b><div class="track"><div class="fill" style="width:${lvl / 36 * 100}%"></div></div></div></td>
         <td>${ch}</td>
         <td>${r.last ? fmtDate(r.last.date) : "—"}</td>
         <td class="num">${r.last ? r.last.gaps.length + r.last.stopItems.length : "—"}</td>
-        <td>${status ? `<span class="status">${status}</span>` : ""}</td></tr>`;
+        <td>${r.change != null && r.change <= 0 ? `<span class="status">No level gain</span>` : ""}</td></tr>`;
     }).join("") + "</tbody>";
 
-  drawTeacherProg();
-  if (T.item == null) {
+  // By class (year group only)
+  $("#t-byClassPanel").hidden = !isYG();
+  if (isYG()) {
+    $("#t-byClassSub").textContent = `${ylName(G.yl)} students can be in different classes. This shows how each class's ${ylName(G.yl)} students are going. Select a class to open its teacher report.`;
+    $("#t-byClass").innerHTML = `<thead><tr><th>Class</th><th>${ylName(G.yl)} students</th><th>Average level</th><th>Average levels gained</th><th>Moved up</th></tr></thead><tbody>` +
+      rooms.sort().map((rm) => {
+        const rr = rows.filter((r) => roomOf(r.st, y) === rm);
+        const s = gainStats(rr);
+        const link = ROOMS[rm] ? `<a href="#teacher" data-room="${rm}">${roomLabel(rm)}</a>` : rm;
+        return `<tr><td>${link}</td><td class="num">${rr.length}</td><td class="num">${s.avgLevel != null ? r1(s.avgLevel) : "—"}</td><td class="num">${s.changes.length ? signed(s.avgGain, r1) : "—"}</td><td class="num">${s.changes.length ? `${s.moved} of ${s.changes.length}` : "—"}</td></tr>`;
+      }).join("") + "</tbody>";
+  }
+
+  $("#t-progTitle").textContent = isYG() ? "Year group progress" : "Class progress";
+  $("#t-itemSubtitle").textContent = `The ${noun()} average on one assessment item at each round. Items a student hasn't reached count as 0%.`;
+  drawGroupProg();
+  if (G.item == null) {
     const ch = itemChanges(y);
     let best = 1, bd = -Infinity;
     ch.forEach((c, i) => { if (c && c.d > bd) { bd = c.d; best = i + 1; } });
-    T.item = best;
+    G.item = best;
   }
-  $("#t-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === T.item ? "selected" : ""}>Item ${i + 1}</option>`).join("");
+  $("#t-itemSel").innerHTML = Array.from({ length: TOTAL_ITEMS }, (_, i) => `<option value="${i + 1}" ${i + 1 === G.item ? "selected" : ""}>Item ${i + 1}</option>`).join("");
   drawItem();
   drawChanges();
   renderShared(rows);
-  renderTeacherFlags(rows);
+  renderGroupFlags(rows);
+
+  $("#t-notes").innerHTML = [
+    `<b>How the numbers are worked out.</b> Every student is assessed in Term 1 and Term 3. ${isYG() ? "Year group" : "Class"} averages use those two rounds. Items a student hasn't reached count as 0%, the same as in the student report.`,
+    "New students also have an entry assessment when they start. It counts towards their own progress and “Change in the year”, but not towards the averages for each round.",
+    isYG()
+      ? "A student's year level comes from their own student record, not from their class. Split classes, such as Pre-primary and Year 1, are shared between two year groups."
+      : "This report is for spotting where a teacher may need more training or support with the framework. It isn't for ranking teachers. Levels gained is the fairest single measure, because average levels depend on which students are in the class.",
+    "Sections marked “Suggested” are ideas added to the original brief.",
+  ].map((t) => `<p>${t}</p>`).join("");
 }
 
-function drawTeacherProg() {
-  const y = T.year, isTotal = T.metric === "total";
+function drawGroupProg() {
+  const y = G.year, isTotal = G.metric === "total";
   const rs = roundStats(y);
   const key = isTotal ? "total" : "level";
   const vals = rs.map((x) => x[key]);
   const all = vals.filter((v) => v != null);
   const step = isTotal ? 10 : 2;
   const fmt = (v) => isTotal ? pct(v) : "Level " + r1(v);
-  $("#t-progSub").textContent = isTotal
-    ? `Average total score across the class at each round in ${y}.`
-    : `Average level across the class at each round in ${y}.`;
+  $("#t-progSub").textContent = `${isTotal ? "Average total score" : "Average level"} across the ${noun()} at each round in ${y}.`;
   lineChart($("#t-prog"), {
     xs: rs.map((_, i) => i), xLabels: rs.map((x) => roundLabel(x.r)),
     series: [{ vals }],
@@ -720,7 +814,7 @@ function drawTeacherProg() {
 }
 
 function drawItem() {
-  const y = T.year, n = T.item;
+  const y = G.year, n = G.item;
   const s = itemSeries(y, n);
   lineChart($("#t-item"), {
     xs: s.map((_, i) => i), xLabels: s.map((p) => roundLabel(p.r)),
@@ -731,13 +825,13 @@ function drawItem() {
   const real = s.filter((p) => p.avg != null);
   const a = real[0], b = real[real.length - 1];
   $("#t-itemSummary").innerHTML = !a ? `No students were assessed on item ${n} in ${y}.`
-    : real.length === 1 ? `Item ${n}: class average <b>${Math.round(a.avg)}%</b> in ${a.r.term}. ${a.full} of ${a.n} students at 100%.`
-    : `Item ${n}: class average went from <b>${Math.round(a.avg)}%</b> in ${a.r.term} to <b>${Math.round(b.avg)}%</b> in ${b.r.term} (<b>${signed(Math.round(b.avg - a.avg))}</b> points). ${b.full} of ${b.n} students now score 100%.`;
+    : real.length === 1 ? `Item ${n}: ${noun()} average <b>${Math.round(a.avg)}%</b> in ${a.r.term}. ${a.full} of ${a.n} students at 100%.`
+    : `Item ${n}: ${noun()} average went from <b>${Math.round(a.avg)}%</b> in ${a.r.term} to <b>${Math.round(b.avg)}%</b> in ${b.r.term} (<b>${signed(Math.round(b.avg - a.avg))}</b> points). ${b.full} of ${b.n} students now score 100%.`;
 }
 
 function drawChanges() {
   const el = $("#t-change");
-  const ch = itemChanges(T.year);
+  const ch = itemChanges(G.year);
   const W = Math.max(300, el.clientWidth), H = 190;
   const m = { t: 14, r: 8, b: 28, l: 46 };
   const ds = ch.filter(Boolean).map((c) => c.d);
@@ -758,21 +852,21 @@ function drawChanges() {
   let bars = "";
   ch.forEach((c, i) => {
     const n = i + 1, x = m.l + i * bw + 1, w = Math.max(2, bw - 2);
-    const sel = n === T.item;
+    const sel = n === G.item;
     if (c && c.d !== 0) {
       const top = Math.min(y(c.d), y(0)), h = Math.max(1, Math.abs(y(c.d) - y(0)));
       bars += `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="2" fill="${c.d > 0 ? "var(--accent)" : "var(--stop)"}" ${sel ? 'stroke="var(--ink)" stroke-width="2"' : ""}/>`;
     } else if (sel) {
       bars += `<rect x="${x}" y="${y(0) - 2}" width="${w}" height="4" fill="var(--ink)"/>`;
     }
-    const t = !c ? `Item ${n}: no student in the class has reached it yet` : `Item ${n}: ${Math.round(c.start)}% → ${Math.round(c.end)}% (${signed(Math.round(c.d))} points)`;
+    const t = !c ? `Item ${n}: no student in the ${noun()} has reached it yet` : `Item ${n}: ${Math.round(c.start)}% → ${Math.round(c.end)}% (${signed(Math.round(c.d))} points)`;
     bars += `<rect class="bar-hit" data-n="${n}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" data-tip="${t}"/>`;
   });
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${bars}<text class="axis-text" x="${W - m.r}" y="${H - 8}" text-anchor="end"></text></svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${bars}</svg>`;
   el.querySelectorAll(".bar-hit").forEach((b) => b.addEventListener("click", () => {
-    T.item = +b.dataset.n; $("#t-itemSel").value = T.item; drawItem(); drawChanges();
+    G.item = +b.dataset.n; $("#t-itemSel").value = G.item; drawItem(); drawChanges();
   }));
-  $("#t-changeSub").textContent = `Change in class average on each item from the first to the latest round of ${T.year}. Select a bar to see that item above.`;
+  $("#t-changeSub").textContent = `Change in the ${noun()} average on each item from the first to the latest round of ${G.year}. Select a bar to see that item above.`;
 }
 
 function renderShared(rows) {
@@ -782,30 +876,36 @@ function renderShared(rows) {
     [...r.last.gaps, ...r.last.stopItems].forEach((n) => { (map[n] = map[n] || []).push(r.st); });
   });
   const items = Object.entries(map).filter(([, v]) => v.length > 1).sort((a, b) => b[1].length - a[1].length || a[0] - b[0]).slice(0, 6);
+  const label = (s) => isYG() ? `${s.name} <span class="sub">${roomOf(s, G.year)}</span>` : s.name;
   $("#t-shared").innerHTML = items.length ? items.map(([n, sts]) =>
-    `<li><span class="it">Item ${n}</span><span class="cnt">${sts.length} students</span><span class="names">${sts.map((s) => `<a href="#${s.id}">${s.name}</a>`).join("")}</span></li>`).join("")
+    `<li><span class="it">Item ${n}</span><span class="cnt">${sts.length} students</span><span class="names">${sts.map((s) => `<a href="#${s.id}">${label(s)}</a>`).join("")}</span></li>`).join("")
     : `<li><span class="sub">No item is a target for more than one student.</span></li>`;
 }
 
-function renderTeacherFlags(rows) {
-  const flags = [];
-  rows.forEach((r) => {
-    if (r.change != null && r.change <= 0) flags.push(["No gain", `<a href="#${r.st.id}">${r.st.name}</a> is at level ${r.last.level}, ${r.change === 0 ? "the same as" : "below"} the start of ${T.year} (level ${r.first.level}).`]);
-  });
+function renderGroupFlags(rows) {
+  const flags = rows.filter((r) => r.change != null && r.change <= 0).map((r) =>
+    ["No gain", `<a href="#${r.st.id}">${r.st.name}</a>${isYG() ? ` (${roomOf(r.st, G.year)})` : ""} is at level ${r.last.level}, ${r.change === 0 ? "the same as" : "below"} the start of ${G.year} (level ${r.first.level}).`]);
   $("#t-flags").innerHTML = flags.length ? flags.map(([t, s]) => `<li><span class="tag">${t}</span><span>${s}</span></li>`).join("")
-    : `<li><span class="tag info">None</span><span>Every student moved up at least one level in ${T.year}.</span></li>`;
+    : `<li><span class="tag info">None</span><span>Every student moved up at least one level in ${G.year}.</span></li>`;
 }
 
 $("#t-years").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  T.year = +b.dataset.y; renderTeacher();
+  G.year = +b.dataset.y; renderGroup();
 });
-$("#t-mTotal").onclick = () => { T.metric = "total"; $("#t-mTotal").setAttribute("aria-pressed", true); $("#t-mLevel").setAttribute("aria-pressed", false); drawTeacherProg(); };
-$("#t-mLevel").onclick = () => { T.metric = "level"; $("#t-mLevel").setAttribute("aria-pressed", true); $("#t-mTotal").setAttribute("aria-pressed", false); drawTeacherProg(); };
-$("#t-itemSel").addEventListener("change", (e) => { T.item = +e.target.value; drawItem(); drawChanges(); });
+$("#t-pick").addEventListener("change", (e) => {
+  if (isYG()) G.yl = +e.target.value; else G.room = e.target.value;
+  renderGroup();
+});
+$("#t-mTotal").onclick = () => { G.metric = "total"; $("#t-mTotal").setAttribute("aria-pressed", true); $("#t-mLevel").setAttribute("aria-pressed", false); drawGroupProg(); };
+$("#t-mLevel").onclick = () => { G.metric = "level"; $("#t-mLevel").setAttribute("aria-pressed", true); $("#t-mTotal").setAttribute("aria-pressed", false); drawGroupProg(); };
+$("#t-itemSel").addEventListener("change", (e) => { G.item = +e.target.value; drawItem(); drawChanges(); });
 $("#t-students").addEventListener("click", (e) => {
   if (e.target.closest("a")) return;
   const tr = e.target.closest("tr[data-id]"); if (tr) location.hash = tr.dataset.id;
+});
+$("#t-byClass").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-room]"); if (a) G.room = a.dataset.room;
 });
 
 /* ================= STUDENT VIEW ================= */
@@ -815,13 +915,13 @@ function renderStudent(st) {
   S.st = st; S.A = st.assessments; S.latest = S.A[S.A.length - 1];
   S.sel = S.A.length - 1; S.showAll = false;
   const A = S.A, latest = S.latest, prev = A[A.length - 2];
-  const nowClass = teacherFor(st.id, 2026);
   $("#s-name").textContent = st.name;
   $("#s-typeBadge").textContent = typeName(st.type);
-  $("#s-back").textContent = `← Room 4 class (${T.year})`;
+  $("#s-back").href = isYG() ? "#yeargroup" : "#teacher";
+  $("#s-back").textContent = isYG() ? `← ${ylName(G.yl)} (${G.year})` : `← ${roomLabel(G.room)} (${G.year})`;
   $("#s-meta").innerHTML = [
-    yearLevel(st, latest.year), TEACHER.school,
-    latest.year === 2026 ? (nowClass === TEACHER.room ? `Current class: ${TEACHER.room} · ${TEACHER.name}` : "Current class: another class") : `Last assessed in ${latest.year}`,
+    ylName(ylNum(st, latest.year)), SCHOOL,
+    `${latest.year === 2026 ? "Current class" : "Last class"}: ${roomLabel(roomOf(st, latest.year))}`,
     `${A.length} assessments since ${fmtDate(A[0].date)}`,
   ].map((t) => `<span>${t}</span>`).join("");
 
@@ -839,8 +939,8 @@ function renderStudent(st) {
     `<span>Items reached <b class="num">${latest.reached} of ${TOTAL_ITEMS}</b></span>` +
     `<span>Teaching targets <b class="num">${latest.gaps.length + latest.stopItems.length}</b></span>`;
 
-  $("#s-progTable").innerHTML = "<tr><th>Date</th><th>Round</th><th>Class</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
-    A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${a.term === "Entry" ? "Entry assessment" : a.term}</td><td>${a.cls}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
+  $("#s-progTable").innerHTML = "<tr><th>Date</th><th>Round</th><th>Year level</th><th>Class</th><th>Total</th><th>Level</th><th>Items reached</th><th>Stopped at</th></tr>" +
+    A.map((a) => `<tr><td>${fmtDate(a.date)}</td><td>${a.term === "Entry" ? "Entry assessment" : a.term}</td><td>${ylName(a.yearLevel)}</td><td>${a.cls}</td><td>${pct(a.total)}</td><td>${a.level}</td><td>${a.reached}</td><td>Items ${a.stopItems.join(", ")}</td></tr>`).join("");
   $("#s-datePick").innerHTML = A.map((a, i) => `<button type="button" data-i="${i}">${fmtDate(a.date, "short")}</button>`).join("");
 
   renderStudentSummary();
@@ -858,7 +958,7 @@ function drawStudentLine() {
     series: [{ vals }], yMax: niceMax(Math.max(...vals), step), yStep: step,
     yFmt: (v) => isTotal ? v + "%" : v, endFmt: (v) => isTotal ? pct(v) : "Level " + v,
     sel: S.sel, onPick: (i) => { S.sel = i; drawStudentLine(); renderBars(); },
-    tip: (i) => `${fmtDate(A[i].date)}, ${A[i].term === "Entry" ? "entry assessment" : A[i].term} (${A[i].cls}): total ${pct(A[i].total)}, level ${A[i].level}, stopped at item ${A[i].stopItems[2] || A[i].reached}`,
+    tip: (i) => `${fmtDate(A[i].date)}, ${A[i].term === "Entry" ? "entry assessment" : A[i].term} (${ylName(A[i].yearLevel)}, ${A[i].cls}): total ${pct(A[i].total)}, level ${A[i].level}, stopped at item ${A[i].stopItems[2] || A[i].reached}`,
   });
   $("#s-progSub").textContent = (isTotal ? "Total assessment score" : "Level reached") + " at each assessment. Select a point to see its item scores below.";
 }
@@ -900,12 +1000,11 @@ function renderBars() {
 function renderStudentSummary() {
   const A = S.A, latest = S.latest, first = A[0];
   const days = Math.round((Date.now() - new Date(latest.date + "T00:00:00")) / 864e5);
-  const gapMonths = A.length > 1 ? Math.round((new Date(latest.date) - new Date(first.date)) / 864e5 / (A.length - 1) / 30.44) : null;
   const mastered = latest.scores.filter((v) => v === 100).length;
   $("#s-stats").innerHTML = [
     [signed(latest.level - first.level), `Levels gained since first assessment (${first.level} to ${latest.level})`],
     [mastered, "Items at 100% in the latest assessment"],
-    [days, "Days since last assessment" + (gapMonths ? ` (they are about ${gapMonths} months apart)` : "")],
+    [days, "Days since last assessment"],
   ].map(([v, k]) => `<div class="stat"><span class="v num">${v}</span><span class="k">${k}</span></div>`).join("");
 
   const flags = [];
@@ -961,12 +1060,19 @@ $("#s-mTotal").onclick = () => { S.metric = "total"; $("#s-mTotal").setAttribute
 $("#s-mLevel").onclick = () => { S.metric = "level"; $("#s-mLevel").setAttribute("aria-pressed", true); $("#s-mTotal").setAttribute("aria-pressed", false); drawStudentLine(); };
 
 /* ================= ROUTING ================= */
+// #teacher, #yeargroup, or a student id such as #s07.
 function route() {
-  const st = BY_ID[location.hash.slice(1)];
+  const h = location.hash.slice(1);
+  const st = BY_ID[h];
   tip.hidden = true;
+  if (!st) {
+    const mode = h === "yeargroup" ? "yeargroup" : "teacher";
+    if (mode !== G.mode) G.item = null;
+    G.mode = mode;
+  }
   $("#teacherView").hidden = !!st;
   $("#studentView").hidden = !st;
-  if (st) renderStudent(st); else renderTeacher();
+  if (st) renderStudent(st); else renderGroup();
   window.scrollTo(0, 0);
 }
 addEventListener("hashchange", route);
@@ -976,7 +1082,7 @@ addEventListener("resize", () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
     if (S.st && !$("#studentView").hidden) drawStudentLine();
-    else { drawTeacherProg(); drawItem(); drawChanges(); }
+    else { drawGroupProg(); drawItem(); drawChanges(); }
   }, 120);
 });
 </script>
