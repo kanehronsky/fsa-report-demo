@@ -38,6 +38,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -136,12 +137,12 @@ th { font-weight: 700; color: var(--ink-2); font-size: 13px; }
 .class-table { width: 100%; }
 .class-table tbody tr { cursor: pointer; }
 .class-table tbody tr:hover { background: var(--track); }
-.class-table td { padding: 10px 12px; vertical-align: middle; }
+.class-table td, .class-table th { padding: 10px 8px; vertical-align: middle; }
 .class-table a { font-weight: 700; text-decoration: none; }
 .class-table a:hover { text-decoration: underline; }
 .lvl { display: flex; align-items: center; gap: 10px; }
 .lvl b { font-family: var(--font-display); font-size: 18px; min-width: 22px; text-align: right; }
-.lvl .track { width: 120px; }
+.lvl .track { width: 90px; }
 .delta-up { color: var(--accent); font-weight: 700; }
 .delta-flat { color: var(--stop); font-weight: 700; }
 .status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--stop-soft); color: var(--stop); }
@@ -674,7 +675,7 @@ function renderTeacher() {
   $("#t-students").innerHTML = `<thead><tr><th>Student</th><th>Year level</th><th>Assessment</th><th>Current level</th><th>Change in ${y}</th><th>Last assessed</th><th>Targets</th><th></th></tr></thead><tbody>` +
     rows.map((r) => {
       const missed = latestRound && !r.st.byRound[latestRound.r.id];
-      const status = missed ? `Not assessed in ${latestRound.r.term}` : r.change != null && r.change <= 0 ? "No level gain" : "";
+      const status = missed ? `Missed ${latestRound.r.term}` : r.change != null && r.change <= 0 ? "No level gain" : "";
       const lvl = r.last ? r.last.level : 0;
       const ch = r.change == null ? `<span class="sub">First year</span>` : r.change > 0 ? `<span class="delta-up">+${r.change}</span>` : `<span class="delta-flat">${r.change === 0 ? "0" : "−" + Math.abs(r.change)}</span>`;
       return `<tr data-id="${r.st.id}">
